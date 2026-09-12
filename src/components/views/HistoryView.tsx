@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   Search, 
   ArrowRight, 
-  Calendar, 
   RotateCcw,
 } from 'lucide-react';
 import type { HistoricalRun } from '../../types/registration';
@@ -116,9 +115,8 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 <span className="text-[10px] px-2 py-0.5 rounded bg-black text-regolith-300 border border-white/10">
                   {run.id}
                 </span>
-                <span className="text-[10px] text-regolith-500 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {run.timestamp.split(' ')[0]}
+                <span className="text-[10px] text-telemetry-green font-semibold tracking-wider">
+                  VERIFIED
                 </span>
               </div>
 
@@ -130,6 +128,34 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 <p className="text-xs text-regolith-400 font-mono mt-0.5">
                   Target: {run.targetFeature}
                 </p>
+              </div>
+
+              {/* Authentic Orbital Imagery Dual-Thumbnail Preview */}
+              <div className="relative h-28 w-full rounded-lg overflow-hidden bg-black border border-white/10 flex">
+                <div className="relative w-1/2 h-full border-r border-white/10 overflow-hidden bg-obsidian-950">
+                  <img
+                    src={run.sourceMeta.previewUrl || '/lunar_clavius_source.png'}
+                    alt="Source lunar sensor frame"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 filter contrast-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-black/80 text-regolith-200 border border-white/10">
+                      SRC: {run.sourceMeta.sensorType.replace('CH2_', '')}
+                    </span>
+                  </div>
+                </div>
+                <div className="relative w-1/2 h-full overflow-hidden bg-obsidian-950">
+                  <img
+                    src={run.referenceMeta.previewUrl || '/lunar_clavius_reference.png'}
+                    alt="Reference lunar base frame"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 filter contrast-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-black/80 text-regolith-200 border border-white/10">
+                      REF: {run.referenceMeta.sensorType.replace('CH2_', '').replace('ISRO_', '')}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               {/* Sensor Pair */}

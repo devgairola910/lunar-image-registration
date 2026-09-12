@@ -73,15 +73,15 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green beacon-live"></span>
-            <span className="text-regolith-200 font-semibold tracking-wider">CH-2 / LRO CORE LINK</span>
+            <span className="text-regolith-200 font-medium tracking-wide">System Online</span>
           </div>
           <span className="hidden sm:inline text-regolith-700">|</span>
-          <span className="hidden sm:inline text-regolith-400">
-            COORD FRAME: <span className="text-regolith-100">MOON_ME (IAU 2015)</span>
+          <span className="hidden sm:inline text-regolith-300">
+            ISRO Chandrayaan-2
           </span>
           <span className="hidden md:inline text-regolith-700">|</span>
           <span className="hidden md:inline text-regolith-400">
-            PIPELINE: <span className="text-regolith-300">MAGSAC++ / LoFTR-LUNAR v2.4</span>
+            AI Image Alignment
           </span>
         </div>
 
@@ -108,14 +108,14 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-bold tracking-wider text-sm sm:text-base text-white font-display">
-                LICE <span className="text-regolith-500 font-light">//</span> MISSION CONTROL
+                ChandraDrishti
               </span>
               <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/5 text-regolith-300 border border-white/10 uppercase tracking-wider">
-                ISRO × NASA
+                ISRO SAC
               </span>
             </div>
             <p className="text-[10px] text-regolith-400 hidden sm:block font-mono">
-              Lunar Image Registration & Invariant Correspondence Engine
+              Lunar Image Registration & Invariant Vision Engine
             </p>
           </div>
         </div>

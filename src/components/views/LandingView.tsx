@@ -35,20 +35,20 @@ export const LandingView: React.FC<LandingViewProps> = ({
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center space-x-2.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse"></span>
-              <span className="font-semibold tracking-wider text-regolith-200">CHANDRAYAAN-2 / LRO MISSION NODE</span>
+              <span className="font-semibold tracking-wider text-regolith-200">ISRO CHANDRAYAAN MISSION NODE</span>
               <span className="text-regolith-600">•</span>
               <span>SYSTEMS NOMINAL</span>
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-display leading-[1.1]">
-              Lunar Image <br />
+              ChandraDrishti <br />
               <span className="text-regolith-300">
-                Correspondence Engine
+                Lunar Vision Engine
               </span>
             </h1>
 
             <p className="text-base sm:text-lg text-regolith-400 max-w-2xl leading-relaxed">
-              Find pixel-accurate correspondences between <span className="text-white font-medium">Chandrayaan-2</span> optical payloads (OHRC, TMC-2, IIRS) and <span className="text-white font-medium">NASA LRO</span> reference imagery—invariant to solar elevation disparity, dynamic shadow displacements, and optical scale divergence.
+              Find pixel-accurate correspondences between <span className="text-white font-medium">Chandrayaan-2</span> optical payloads (OHRC, TMC-2, IIRS) and <span className="text-white font-medium">ISRO reference imagery</span>—invariant to solar elevation disparity, dynamic shadow displacements, and optical scale divergence.
             </p>
 
             {/* Precision Technical Telemetry Chips */}
@@ -63,7 +63,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
               </div>
               <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900 border border-white/10 font-mono text-xs text-regolith-300 shadow-sm">
                 <Globe2 className="w-3.5 h-3.5 text-earth-400" />
-                <span>Cross-Mission: <strong className="text-white">ISRO ↔ NASA LRO</strong></span>
+                <span>Agency: <strong className="text-white">ISRO SAC / ISSDC</strong></span>
               </div>
             </div>
 
@@ -88,7 +88,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 className="inline-flex items-center space-x-2 px-4 py-3.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-750 border border-white/15 text-regolith-200 hover:text-white font-mono text-xs transition-all duration-150 cursor-pointer"
               >
                 <Play className="w-3.5 h-3.5 text-regolith-400" />
-                <span>Demo: Shackleton Crater</span>
+                <span>Demo: Clavius Crater</span>
               </button>
             </div>
           </div>
@@ -98,8 +98,8 @@ export const LandingView: React.FC<LandingViewProps> = ({
             <div className="relative w-full max-w-[340px] sm:max-w-md aspect-[4/5] sm:aspect-square rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl group">
               {/* Authentic High-Resolution Lunar Orbital Surface Image */}
               <img
-                src="/lunar_tycho_orbital.png"
-                alt="NASA / Chandrayaan-2 Real Lunar Orbital Panchromatic Surface Imagery"
+                src="/lunar_clavius_reference.png"
+                alt="ISRO Chandrayaan-2 Real Lunar Orbital Panchromatic Surface Imagery"
                 className="w-full h-full object-cover object-center filter contrast-115 brightness-95 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
               />
 
@@ -338,7 +338,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
               High-Precision Planetary Georeferencing
             </h3>
             <p className="text-sm text-regolith-300 leading-relaxed">
-              Standard optical feature matchers (SIFT, ORB) fail on lunar terrain when solar incidence changes because crater rim shadows flip 180 degrees. The LICE engine integrates geometric priors from SPICE ephemeris kernels and deep semi-dense matching to maintain geometric fidelity.
+              Standard optical feature matchers (SIFT, ORB) fail on lunar terrain when solar incidence changes because crater rim shadows flip 180 degrees. The ChandraDrishti engine integrates geometric priors from SPICE ephemeris kernels and deep semi-dense matching to maintain geometric fidelity.
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 font-mono text-xs text-regolith-300">
               <div className="flex items-center space-x-2">

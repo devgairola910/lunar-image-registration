@@ -7,7 +7,6 @@ import type {
   TileHeatmapCell, 
   HistoricalRun 
 } from '../types/registration';
-import { generateLunarCanvas } from './lunarRenderer';
 
 export const SENSORS: Record<SensorType, SensorInfo> = {
   CH2_OHRC: {
@@ -34,134 +33,62 @@ export const SENSORS: Record<SensorType, SensorInfo> = {
     band: 'Near & Short-Wave IR (0.8–5.0 µm)',
     description: 'Hyperspectral mineralogical mapping and hydration absorption band detection (3.0 µm OH/H2O).'
   },
-  LRO_NAC: {
-    id: 'LRO_NAC',
-    name: 'NASA LRO NAC (Narrow Angle Camera)',
-    mission: 'NASA LRO',
-    nominalGsd: 0.5,
-    band: 'Panchromatic (400–750 nm)',
-    description: 'High-resolution global lunar baseline dataset (0.5 to 2.0 m/pixel).'
+  CH1_TMC: {
+    id: 'CH1_TMC',
+    name: 'Chandrayaan-1 TMC (Terrain Mapping Camera)',
+    mission: 'Chandrayaan-1',
+    nominalGsd: 5.0,
+    band: 'Panchromatic Stereo (500–850 nm)',
+    description: 'Chandrayaan-1 high-precision stereo terrain basemap (5 m/pixel).'
   },
-  LRO_WAC: {
-    id: 'LRO_WAC',
-    name: 'NASA LRO WAC (Wide Angle Camera)',
-    mission: 'NASA LRO',
-    nominalGsd: 100.0,
-    band: 'Multispectral (7 UV/Visible bands)',
-    description: 'Global 100 m/pixel lunar basemap with repetitive lighting observations.'
-  },
-  CLEMENTINE: {
-    id: 'CLEMENTINE',
-    name: 'NASA Clementine UVVIS / NIR',
-    mission: 'NASA Clementine',
-    nominalGsd: 115.0,
-    band: 'Multispectral UV-VIS-NIR',
-    description: 'Historical global multispectral albedo reference.'
+  ISRO_MOSAIC: {
+    id: 'ISRO_MOSAIC',
+    name: 'ISRO ISSDC Global Lunar Mosaic',
+    mission: 'ISRO ISSDC',
+    nominalGsd: 25.0,
+    band: 'Calibrated Panchromatic Mosaic',
+    description: 'ISRO Indian Space Science Data Centre calibrated lunar reference mosaic.'
   },
   OTHER: {
     id: 'OTHER',
-    name: 'Custom / Other Lunar Sensor',
+    name: 'Custom / Other ISRO Frame',
     mission: 'Custom',
     nominalGsd: 1.0,
     band: 'Optical / Radar / DEM',
-    description: 'Custom optical or synthetic aperture radar (SAR) dataset.'
+    description: 'Custom optical or synthetic aperture radar (DFSAR) lunar dataset.'
   }
 };
 
 // Generate realistic preset datasets
 export function getPresetScenarios(): PresetScenario[] {
-  // Shackleton Crater (South Pole, extreme sun angle variation)
-  const shackletonSrcImg = generateLunarCanvas({
-    seed: 4210,
-    width: 600,
-    height: 600,
-    sunElevation: 12.0, // low grazing illumination
-    sunAzimuth: 140.0,
-    resolutionScale: 1.0,
-    rotationDeg: -2.4,
-    offsetX: -8,
-    offsetY: 6,
-    craterPreset: 'shackleton',
-    sensorNoiseLevel: 0.04,
-    contrastBoost: 1.3
-  });
-
-  const shackletonRefImg = generateLunarCanvas({
-    seed: 4210,
-    width: 600,
-    height: 600,
-    sunElevation: 68.0, // high overhead illumination
-    sunAzimuth: 45.0,
-    resolutionScale: 1.0,
-    rotationDeg: 0.0,
-    offsetX: 0,
-    offsetY: 0,
-    craterPreset: 'shackleton',
-    sensorNoiseLevel: 0.02,
-    contrastBoost: 1.0
-  });
-
-
-
-  // Mare Imbrium (Basalt Plains & Pytheas Crater)
-  const mareSrcImg = generateLunarCanvas({
-    seed: 1955,
-    width: 600,
-    height: 600,
-    sunElevation: 35.0,
-    sunAzimuth: 310.0,
-    resolutionScale: 0.95,
-    rotationDeg: -1.8,
-    offsetX: -5,
-    offsetY: -8,
-    craterPreset: 'mare_imbrium',
-    sensorNoiseLevel: 0.03,
-    contrastBoost: 1.2
-  });
-
-  const mareRefImg = generateLunarCanvas({
-    seed: 1955,
-    width: 600,
-    height: 600,
-    sunElevation: 48.0,
-    sunAzimuth: 110.0,
-    resolutionScale: 1.0,
-    rotationDeg: 0.0,
-    offsetX: 0,
-    offsetY: 0,
-    craterPreset: 'mare_imbrium',
-    sensorNoiseLevel: 0.02,
-    contrastBoost: 1.0
-  });
-
   return [
     {
-      id: 'preset_shackleton_southpole',
-      title: 'Shackleton Crater (South Pole)',
-      targetFeature: 'Permanent Shadow Region (PSR) & Rim Crest',
-      location: '89.9°S, 0.0°E (Lunar South Pole)',
+      id: 'preset_clavius_basin',
+      title: 'Clavius Crater (Highlands)',
+      targetFeature: 'Crater Interior & Internal Arc (Clavius D, C, N, J)',
+      location: '58.4°S, 14.4°W (Southern Highlands)',
       difficulty: 'High Illumination Delta',
-      description: 'Registration between Chandrayaan-2 OHRC (0.25 m/px, 12° grazing sun angle) and NASA LRO NAC (0.5 m/px, 68° high sun angle).',
+      description: 'Co-registration between Chandrayaan-2 moving sensor frame and ISRO high-resolution reference baseline over complex cratered terrain.',
       sourceMeta: {
         sensorType: 'CH2_OHRC',
-        sunElevation: 12.0,
+        sunElevation: 18.0,
         resolution: 0.25,
-        phaseAngle: 78.0,
-        centerCoordinates: { lat: -89.9, lon: 0.0 },
-        imageName: 'CH2_OHRC_20220914T0812_SHACKLETON.tif',
-        previewUrl: shackletonSrcImg
+        phaseAngle: 72.0,
+        centerCoordinates: { lat: -58.4, lon: -14.4 },
+        imageName: 'CH2_OHRC_20231102T0418_CLAVIUS.tif',
+        previewUrl: '/lunar_clavius_source.png'
       },
       referenceMeta: {
-        sensorType: 'LRO_NAC',
-        sunElevation: 68.0,
-        resolution: 0.50,
-        phaseAngle: 22.0,
-        centerCoordinates: { lat: -89.9, lon: 0.0 },
-        imageName: 'LRO_NAC_M119842104RE_SHACKLETON.tif',
-        previewUrl: shackletonRefImg
+        sensorType: 'CH2_TMC',
+        sunElevation: 52.0,
+        resolution: 5.0,
+        phaseAngle: 38.0,
+        centerCoordinates: { lat: -58.4, lon: -14.4 },
+        imageName: 'ISRO_TMC2_REF_BASE_CLAVIUS.tif',
+        previewUrl: '/lunar_clavius_reference.png'
       },
-      sourceSvgOrCanvas: shackletonSrcImg,
-      refSvgOrCanvas: shackletonRefImg
+      sourceSvgOrCanvas: '/lunar_clavius_source.png',
+      refSvgOrCanvas: '/lunar_clavius_reference.png'
     },
     {
       id: 'preset_tycho_peak',
@@ -169,55 +96,55 @@ export function getPresetScenarios(): PresetScenario[] {
       targetFeature: 'Central Uplift Peak & Impact Melt Terrace',
       location: '43.3°S, 11.2°W (Southern Highlands)',
       difficulty: 'Extreme Scale Variation',
-      description: 'Chandrayaan-2 TMC-2 Stereo Nadir (5.0 m/px) matched with NASA LRO WAC Global Mosaic (100 m/px) across complex terraced topography.',
+      description: 'Chandrayaan-2 OHRC high-resolution frame (0.32 m/px) matched with ISRO TMC-2 Stereo Baseline across terraced topography.',
       sourceMeta: {
-        sensorType: 'CH2_TMC',
+        sensorType: 'CH2_OHRC',
         sunElevation: 28.0,
-        resolution: 5.0,
+        resolution: 0.32,
         phaseAngle: 62.0,
         centerCoordinates: { lat: -43.3, lon: -11.2 },
-        imageName: 'CH2_TMC_NAD_20210405_TYCHO.tif',
-        previewUrl: '/lunar_tycho_orbital.png'
+        imageName: 'CH2_OHRC_20191017_TYCHO_PEAK.tif',
+        previewUrl: '/lunar_tycho_source.jpg'
       },
       referenceMeta: {
-        sensorType: 'LRO_WAC',
+        sensorType: 'CH2_TMC',
         sunElevation: 54.0,
-        resolution: 100.0,
+        resolution: 5.0,
         phaseAngle: 36.0,
         centerCoordinates: { lat: -43.3, lon: -11.2 },
-        imageName: 'LRO_WAC_GLD100_TYCHO.tif',
-        previewUrl: '/lunar_tycho_orbital.png'
+        imageName: 'ISRO_TMC2_BASE_TYCHO_ORBIT6485.tif',
+        previewUrl: '/lunar_tycho_reference.jpg'
       },
-      sourceSvgOrCanvas: '/lunar_tycho_orbital.png',
-      refSvgOrCanvas: '/lunar_tycho_orbital.png'
+      sourceSvgOrCanvas: '/lunar_tycho_source.jpg',
+      refSvgOrCanvas: '/lunar_tycho_reference.jpg'
     },
     {
-      id: 'preset_mare_imbrium',
-      title: 'Mare Imbrium (Pytheas Crater)',
-      targetFeature: 'Basalt Flow Ridge & Ejecta Halo',
-      location: '20.5°N, 20.6°W (Mare Basalt Plain)',
+      id: 'preset_boguslawsky_pole',
+      title: 'Boguslawsky Crater (South Pole)',
+      targetFeature: 'Polar Landing Corridor & Floor Smooth Basalt',
+      location: '69.7°S, 74.4°E (Lunar South Pole Region)',
       difficulty: 'Standard',
-      description: 'Chandrayaan-2 IIRS Hyperspectral SWIR band (80 m/px) co-registered to NASA LRO NAC panchromatic reference base.',
+      description: 'Chandrayaan-2 OHRC high-resolution frame co-registered to ISRO TMC-2 reference baseline for surface landing safety certification.',
       sourceMeta: {
-        sensorType: 'CH2_IIRS',
-        sunElevation: 35.0,
-        resolution: 80.0,
-        phaseAngle: 55.0,
-        centerCoordinates: { lat: 20.5, lon: -20.6 },
-        imageName: 'CH2_IIRS_SWIR_20230219_IMBRIUM.tif',
-        previewUrl: mareSrcImg
+        sensorType: 'CH2_OHRC',
+        sunElevation: 1.2,
+        resolution: 0.32,
+        phaseAngle: 104.5,
+        centerCoordinates: { lat: -69.7, lon: 74.4 },
+        imageName: 'CH2_OHRC_20210816_BOGUSLAWSKY.tif',
+        previewUrl: '/lunar_boguslawsky_source.jpg'
       },
       referenceMeta: {
-        sensorType: 'LRO_NAC',
-        sunElevation: 48.0,
-        resolution: 0.50,
-        phaseAngle: 42.0,
-        centerCoordinates: { lat: 20.5, lon: -20.6 },
-        imageName: 'LRO_NAC_M102948271LE_IMBRIUM.tif',
-        previewUrl: mareRefImg
+        sensorType: 'CH2_TMC',
+        sunElevation: 4.8,
+        resolution: 3.2,
+        phaseAngle: 82.1,
+        centerCoordinates: { lat: -69.7, lon: 74.4 },
+        imageName: 'ISRO_TMC2_BASE_BOGUSLAWSKY_ORBIT2843.tif',
+        previewUrl: '/lunar_boguslawsky_reference.jpg'
       },
-      sourceSvgOrCanvas: mareSrcImg,
-      refSvgOrCanvas: mareRefImg
+      sourceSvgOrCanvas: '/lunar_boguslawsky_source.jpg',
+      refSvgOrCanvas: '/lunar_boguslawsky_reference.jpg'
     }
   ];
 }
@@ -377,25 +304,25 @@ export function generateKeypointDataset(
 export function getInitialHistoricalRuns(): HistoricalRun[] {
   const presets = getPresetScenarios();
   
-  const shackletonData = generateKeypointDataset(600, 600, 420, 0.89, 101);
+  const claviusData = generateKeypointDataset(600, 600, 420, 0.89, 101);
   const tychoData = generateKeypointDataset(600, 600, 310, 0.84, 202);
-  const mareData = generateKeypointDataset(600, 600, 275, 0.91, 303);
+  const boguslawskyData = generateKeypointDataset(600, 600, 275, 0.91, 303);
 
   return [
     {
       id: 'RUN-2026-CH2-0884',
-      title: 'Shackleton Crater South Pole High-Res Co-Registration',
-      targetFeature: 'PSR Crater Rim & Slope Analysis',
+      title: 'Clavius Crater Highlands High-Precision Co-Registration',
+      targetFeature: 'Interior Multi-Crater Arc & Basin Floor (58.4°S, 14.4°W)',
       timestamp: '2026-09-10 14:32:19 UTC',
       sourceMeta: presets[0].sourceMeta,
       referenceMeta: presets[0].referenceMeta,
-      metrics: shackletonData.metrics,
-      keypoints: shackletonData.keypoints
+      metrics: claviusData.metrics,
+      keypoints: claviusData.keypoints
     },
     {
       id: 'RUN-2026-CH2-0879',
       title: 'Tycho Crater Central Peak Stereo DEM Alignment',
-      targetFeature: 'Central Uplift & Terraced Slopes',
+      targetFeature: 'Central Uplift & Terraced Slopes (43.3°S, 11.2°W)',
       timestamp: '2026-09-08 09:15:40 UTC',
       sourceMeta: presets[1].sourceMeta,
       referenceMeta: presets[1].referenceMeta,
@@ -404,13 +331,13 @@ export function getInitialHistoricalRuns(): HistoricalRun[] {
     },
     {
       id: 'RUN-2026-CH2-0872',
-      title: 'Mare Imbrium Basalt Plain Hyperspectral Calibration',
-      targetFeature: 'Pytheas Impact Ejecta',
+      title: 'Boguslawsky Polar Landing Corridor Co-Registration',
+      targetFeature: 'Polar Landing Zone Safety Mapping (72.9°S, 43.2°E)',
       timestamp: '2026-09-04 18:48:02 UTC',
       sourceMeta: presets[2].sourceMeta,
       referenceMeta: presets[2].referenceMeta,
-      metrics: mareData.metrics,
-      keypoints: mareData.keypoints
+      metrics: boguslawskyData.metrics,
+      keypoints: boguslawskyData.keypoints
     }
   ];
 }

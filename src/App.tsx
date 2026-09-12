@@ -23,7 +23,7 @@ import { soundFx } from './utils/soundEffects';
 export function App() {
   const [presets] = useState<PresetScenario[]>(() => getPresetScenarios());
   const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'processing' | 'results' | 'history'>('landing');
-  const [activePresetId, setActivePresetId] = useState<string>('preset_shackleton_southpole');
+  const [activePresetId, setActivePresetId] = useState<string>('preset_clavius_basin');
 
   // Source & Reference Image Metadata
   const [sourceMeta, setSourceMeta] = useState<ImageMetadata>(presets[0].sourceMeta);
@@ -45,9 +45,9 @@ export function App() {
     setReferenceMeta(preset.referenceMeta);
 
     // Generate specific seed dataset for this scenario
-    const seed = preset.id.includes('shackleton') ? 101 : preset.id.includes('tycho') ? 202 : 303;
-    const count = preset.id.includes('shackleton') ? 420 : preset.id.includes('tycho') ? 310 : 275;
-    const inlierRatio = preset.id.includes('shackleton') ? 0.89 : preset.id.includes('tycho') ? 0.84 : 0.91;
+    const seed = preset.id.includes('clavius') ? 101 : preset.id.includes('tycho') ? 202 : 303;
+    const count = preset.id.includes('clavius') ? 420 : preset.id.includes('tycho') ? 310 : 275;
+    const inlierRatio = preset.id.includes('clavius') ? 0.89 : preset.id.includes('tycho') ? 0.84 : 0.91;
 
     const data = generateKeypointDataset(600, 600, count, inlierRatio, seed);
     setKeypointData(data);
@@ -199,9 +199,9 @@ export function App() {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
             <span className="w-2 h-2 rounded-full bg-mission-teal"></span>
-            <span className="text-slate-300 font-bold">LICE PROTOCOL v2.4</span>
+            <span className="text-slate-300 font-bold">CHANDRADRISHTI PROTOCOL v2.4</span>
             <span>•</span>
-            <span>ISRO CHANDRAYAAN-2 & NASA LRO LUNAR CORRESPONDENCE NODE</span>
+            <span>ISRO CHANDRAYAAN LUNAR CORRESPONDENCE NODE (SAC / ISSDC)</span>
           </div>
 
           <div className="flex items-center space-x-4 text-slate-400">

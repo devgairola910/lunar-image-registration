@@ -56,8 +56,8 @@ export function downloadTelemetryJSON(
 ) {
   const payload = {
     missionHeader: {
-      generator: 'Lunar Image Correspondence Engine (LICE) v2.4',
-      agencyReference: 'ISRO Chandrayaan-2 / NASA LRO Cross-Calibration Node',
+      generator: 'ChandraDrishti (ISRO Lunar Vision Engine) v2.4',
+      agencyReference: 'ISRO Chandrayaan-2 Geodetic Registration Node (SAC / ISSDC)',
       timestampUtc: new Date().toISOString(),
       coordinateFrame: 'MOON_ME (IAU/IAG 2015 Lunar Mean Earth/Polar Axis)',
       confidenceGrade: metrics.confidenceLevel,

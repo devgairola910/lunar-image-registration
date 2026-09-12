@@ -82,6 +82,26 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     }
   }, [sourceMeta.previewUrl, referenceMeta.previewUrl]);
 
+  // Calculate aspect ratio & dimensions helper
+  const getImageDimensions = useCallback((canvasWidth: number, canvasHeight: number) => {
+    const srcImg = sourceImgRef.current;
+    const refImg = refImgRef.current;
+    const naturalW = refImg?.naturalWidth || srcImg?.naturalWidth || 600;
+    const naturalH = refImg?.naturalHeight || srcImg?.naturalHeight || 600;
+    const imgAspectRatio = naturalW / naturalH;
+
+    let imgW = canvasWidth * 0.94;
+    let imgH = imgW / imgAspectRatio;
+    if (imgH > canvasHeight * 0.90) {
+      imgH = canvasHeight * 0.90;
+      imgW = imgH * imgAspectRatio;
+    }
+    const imgX = (canvasWidth - imgW) / 2;
+    const imgY = (canvasHeight - imgH) / 2;
+
+    return { imgX, imgY, imgW, imgH, imgAspectRatio };
+  }, []);
+
   // Main Canvas Render Loop
   const render = useCallback(() => {
     const canvas = canvasRef.current;
@@ -101,7 +121,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     const srcImg = sourceImgRef.current;
     const refImg = refImgRef.current;
 
-    if (!srcImg || !refImg) {
+    if (!imagesLoaded || !srcImg || !refImg) {
       ctx.fillStyle = '#71717a';
       ctx.font = '12px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
@@ -109,29 +129,36 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       return;
     }
 
+    // High quality interpolation for real lunar sensor imagery
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
     ctx.save();
     // Apply pan & zoom
     ctx.translate(width / 2 + pan.x, height / 2 + pan.y);
     ctx.scale(zoom, zoom);
     ctx.translate(-width / 2, -height / 2);
 
-    const imgW = Math.min(width, height) * 0.92;
-    const imgH = imgW;
-    const imgX = (width - imgW) / 2;
-    const imgY = (height - imgH) / 2;
+    const { imgX, imgY, imgW, imgH, imgAspectRatio } = getImageDimensions(width, height);
 
     if (viewMode === 'sideBySide') {
       // Side by Side Mode
-      const halfW = imgW * 0.48;
+      const maxHalfW = (width - 32) / 2;
+      let halfW = maxHalfW;
+      let halfH = halfW / imgAspectRatio;
+      if (halfH > height * 0.88) {
+        halfH = height * 0.88;
+        halfW = halfH * imgAspectRatio;
+      }
       const leftX = width / 2 - halfW - 8;
       const rightX = width / 2 + 8;
-      const y = imgY;
+      const y = (height - halfH) / 2;
 
       // Source Left
-      ctx.drawImage(srcImg, leftX, y, halfW, imgH);
+      ctx.drawImage(srcImg, leftX, y, halfW, halfH);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(leftX, y, halfW, imgH);
+      ctx.strokeRect(leftX, y, halfW, halfH);
 
       // Label Left
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -142,10 +169,10 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.fillText(`SRC: ${sourceMeta.sensorType}`, leftX + 10, y + 20);
 
       // Reference Right
-      ctx.drawImage(refImg, rightX, y, halfW, imgH);
+      ctx.drawImage(refImg, rightX, y, halfW, halfH);
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctx.lineWidth = 1;
-      ctx.strokeRect(rightX, y, halfW, imgH);
+      ctx.strokeRect(rightX, y, halfW, halfH);
 
       // Label Right
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -198,9 +225,9 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.fillText(`SRC (CH-2)`, imgX + 12, imgY + 22);
 
       ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-      ctx.fillRect(imgX + imgW - 110, imgY + 8, 102, 20);
+      ctx.fillRect(imgX + imgW - 100, imgY + 8, 92, 20);
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`REF (NASA LRO)`, imgX + imgW - 104, imgY + 22);
+      ctx.fillText(`REF (ISRO)`, imgX + imgW - 88, imgY + 22);
 
     } else if (viewMode === 'blend') {
       // Overlay Blend Mode
@@ -344,6 +371,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     ctx.restore();
   }, [
     imagesLoaded,
+    getImageDimensions,
     viewMode,
     zoom,
     pan,
@@ -391,8 +419,8 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
 
     // Check if clicking near the split slider line in 'split' mode
     if (viewMode === 'split') {
-      const imgW = Math.min(canvas.width, canvas.height) * 0.92;
-      const imgX = (canvas.width - imgW) / 2 + pan.x;
+      const { imgX: baseImgX, imgW } = getImageDimensions(canvas.width, canvas.height);
+      const imgX = baseImgX + pan.x;
       const splitX = imgX + imgW * splitPosition;
 
       if (Math.abs(mouseX - splitX) < 25) {
@@ -413,14 +441,13 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const imgW = Math.min(canvas.width, canvas.height) * 0.92;
-    const imgH = imgW;
-    const imgX = (canvas.width - imgW) / 2 + pan.x;
-    const imgY = (canvas.height - imgH) / 2 + pan.y;
+    const { imgX: baseImgX, imgY: baseImgY, imgW, imgH } = getImageDimensions(canvas.width, canvas.height);
+    const imgX = baseImgX + pan.x;
+    const imgY = baseImgY + pan.y;
 
     // Calculate pixel coordinates relative to 600x600 image space
     const imagePixelX = Math.round(((mouseX - imgX) / (imgW * zoom)) * 600);
-    const imagePixelY = Math.round(((mouseY - imgY) / (imgW * zoom)) * 600);
+    const imagePixelY = Math.round(((mouseY - imgY) / (imgH * zoom)) * 600);
 
     if (imagePixelX >= 0 && imagePixelX <= 600 && imagePixelY >= 0 && imagePixelY <= 600) {
       setCursorCoord({ x: imagePixelX, y: imagePixelY });

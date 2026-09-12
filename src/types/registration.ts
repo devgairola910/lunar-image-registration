@@ -2,15 +2,14 @@ export type SensorType =
   | 'CH2_OHRC' 
   | 'CH2_TMC' 
   | 'CH2_IIRS' 
-  | 'LRO_NAC' 
-  | 'LRO_WAC' 
-  | 'CLEMENTINE' 
+  | 'CH1_TMC' 
+  | 'ISRO_MOSAIC' 
   | 'OTHER';
 
 export interface SensorInfo {
   id: SensorType;
   name: string;
-  mission: 'Chandrayaan-2' | 'NASA LRO' | 'NASA Clementine' | 'Custom';
+  mission: 'Chandrayaan-2' | 'Chandrayaan-1' | 'ISRO ISSDC' | 'Custom';
   nominalGsd: number; // meters/pixel
   band: string;
   description: string;

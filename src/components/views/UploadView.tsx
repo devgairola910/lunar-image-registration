@@ -107,7 +107,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
             Optical Sensor Frames & Metadata
           </h2>
           <p className="text-xs sm:text-sm text-regolith-400">
-            Ingest Chandrayaan-2 moving sensor frames and NASA LRO fixed reference frames.
+            Ingest Chandrayaan-2 moving sensor frames and ISRO baseline reference frames.
           </p>
         </div>
 
@@ -132,6 +132,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
               {p.title.split(' ')[0]}
             </button>
           ))}
+
           <button
             onClick={() => {
               soundFx.playClick();
@@ -145,13 +146,13 @@ export const UploadView: React.FC<UploadViewProps> = ({
         </div>
       </div>
 
-      {/* Dual Ingestion Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Grid: Two Upload Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* SOURCE IMAGE PANEL */}
         <ReticleFrame
-          title="Source Optical Frame (Moving / Chandrayaan-2)"
+          title="Source Target Frame (Dynamic / Chandrayaan-2)"
           badge="ISRO CH-2"
-          badgeColor="neutral"
+          badgeColor="teal"
           glow={Boolean(sourceMeta.previewUrl)}
         >
           <div className="space-y-5">
@@ -204,7 +205,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                     Drop Source Frame or <span className="text-white underline">Browse</span>
                   </div>
                   <p className="text-[11px] text-regolith-500">
-                    GeoTIFF, PNG, JPEG, or raw panchromatic raster
+                    Supports GeoTIFF, PNG, JPG (ISRO Level-1/2 PDS4)
                   </p>
                 </div>
               )}
@@ -218,7 +219,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <span className="flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-regolith-300" /> Sensor Payload
                   </span>
-                  <span className="text-[10px] text-regolith-500">ISRO Optical</span>
+                  <span className="text-[10px] text-regolith-500">Optical Subsystem</span>
                 </label>
                 <select
                   value={sourceMeta.sensorType}
@@ -231,10 +232,10 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   }}
                   className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30 transition-colors"
                 >
-                  <option value="CH2_OHRC">Chandrayaan-2 OHRC (0.25 m/px Panchromatic)</option>
+                  <option value="CH2_OHRC">Chandrayaan-2 OHRC (0.25 m/px High-Res)</option>
                   <option value="CH2_TMC">Chandrayaan-2 TMC-2 (5.0 m/px Stereo)</option>
                   <option value="CH2_IIRS">Chandrayaan-2 IIRS (80.0 m/px Hyperspectral)</option>
-                  <option value="OTHER">Custom Sensor / Other Payload</option>
+                  <option value="OTHER">Other ISRO Lunar Payload</option>
                 </select>
                 <p className="text-[10px] text-regolith-500 mt-1">
                   {SENSORS[sourceMeta.sensorType].description}
@@ -255,44 +256,34 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   max="90"
                   step="1"
                   value={sourceMeta.sunElevation}
-                  onChange={(e) => onUpdateSourceMeta({ sunElevation: parseFloat(e.target.value) })}
-                  className="w-full accent-white bg-obsidian-950 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  onChange={(e) => onUpdateSourceMeta({ sunElevation: Number(e.target.value) })}
+                  className="w-full accent-white bg-obsidian-800 h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-regolith-500">
-                  <span>0° Grazing (PSR Shadows)</span>
-                  <span>45° Moderate</span>
-                  <span>90° Overhead</span>
+                <div className="flex justify-between text-[10px] text-regolith-600">
+                  <span>0° (Grazing/Shadowed)</span>
+                  <span>45°</span>
+                  <span>90° (Noon Overhead)</span>
                 </div>
               </div>
 
-              {/* Resolution & Coordinates */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-regolith-400 mb-1">GSD Resolution (m/px)</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    value={sourceMeta.resolution}
-                    onChange={(e) => onUpdateSourceMeta({ resolution: parseFloat(e.target.value) || 0.25 })}
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-regolith-400 mb-1">Phase Angle (°)</label>
-                  <input
-                    type="number"
-                    step="1"
-                    value={sourceMeta.phaseAngle}
-                    onChange={(e) => onUpdateSourceMeta({ phaseAngle: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
-                  />
-                </div>
+              {/* Ground Sample Distance (GSD) / Resolution */}
+              <div>
+                <label className="block text-regolith-400 mb-1">
+                  Ground Sample Distance (m/pixel)
+                </label>
+                <input
+                  type="number"
+                  step="0.05"
+                  value={sourceMeta.resolution}
+                  onChange={(e) => onUpdateSourceMeta({ resolution: Number(e.target.value) })}
+                  className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                />
               </div>
 
               {/* Lunar Coordinates */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-regolith-400 mb-1">Center Latitude</label>
+                  <label className="block text-regolith-400 mb-1">Center Lat (°)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -301,15 +292,15 @@ export const UploadView: React.FC<UploadViewProps> = ({
                       onUpdateSourceMeta({
                         centerCoordinates: {
                           ...sourceMeta.centerCoordinates,
-                          lat: parseFloat(e.target.value) || 0
+                          lat: Number(e.target.value)
                         }
                       })
                     }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
                 <div>
-                  <label className="block text-regolith-400 mb-1">Center Longitude</label>
+                  <label className="block text-regolith-400 mb-1">Center Lon (°)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -318,11 +309,11 @@ export const UploadView: React.FC<UploadViewProps> = ({
                       onUpdateSourceMeta({
                         centerCoordinates: {
                           ...sourceMeta.centerCoordinates,
-                          lon: parseFloat(e.target.value) || 0
+                          lon: Number(e.target.value)
                         }
                       })
                     }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
                   />
                 </div>
               </div>
@@ -332,8 +323,8 @@ export const UploadView: React.FC<UploadViewProps> = ({
 
         {/* REFERENCE IMAGE PANEL */}
         <ReticleFrame
-          title="Reference Baseline Frame (Fixed / NASA LRO)"
-          badge="NASA LRO"
+          title="Reference Baseline Frame (ISRO Archive)"
+          badge="ISRO BASELINE"
           badgeColor="neutral"
           glow={Boolean(referenceMeta.previewUrl)}
         >
@@ -387,7 +378,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                     Drop Reference Frame or <span className="text-white underline">Browse</span>
                   </div>
                   <p className="text-[11px] text-regolith-500">
-                    NASA LRO NAC, WAC, Clementine, or LOLA DEM
+                    ISRO Chandrayaan-2 TMC/OHRC, CH-1 TMC, or ISSDC Mosaic
                   </p>
                 </div>
               )}
@@ -401,7 +392,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <span className="flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-regolith-300" /> Reference Sensor Payload
                   </span>
-                  <span className="text-[10px] text-regolith-500">NASA Baseline</span>
+                  <span className="text-[10px] text-regolith-500">ISRO Baseline</span>
                 </label>
                 <select
                   value={referenceMeta.sensorType}
@@ -414,10 +405,11 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   }}
                   className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30 transition-colors"
                 >
-                  <option value="LRO_NAC">NASA LRO NAC (0.50 m/px Panchromatic)</option>
-                  <option value="LRO_WAC">NASA LRO WAC (100.0 m/px Multispectral)</option>
-                  <option value="CLEMENTINE">NASA Clementine UVVIS/NIR (115 m/px)</option>
-                  <option value="OTHER">Custom Global Reference Basemap</option>
+                  <option value="CH2_TMC">ISRO Chandrayaan-2 TMC-2 (5.0 m/px)</option>
+                  <option value="CH2_OHRC">ISRO Chandrayaan-2 OHRC (0.25 m/px)</option>
+                  <option value="CH1_TMC">ISRO Chandrayaan-1 TMC Base (5.0 m/px)</option>
+                  <option value="ISRO_MOSAIC">ISRO ISSDC Global Lunar Mosaic (25 m/px)</option>
+                  <option value="OTHER">Custom / User Ingested Frame</option>
                 </select>
                 <p className="text-[10px] text-regolith-500 mt-1">
                   {SENSORS[referenceMeta.sensorType].description}

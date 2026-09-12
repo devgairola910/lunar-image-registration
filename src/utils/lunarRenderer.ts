@@ -1,5 +1,5 @@
 // High-Fidelity Monochrome Lunar Surface Imagery Generator
-// Generates realistic panchromatic optical orbiter imagery (ISRO OHRC / NASA LROC NAC style)
+// Generates realistic panchromatic optical orbiter imagery (ISRO OHRC / TMC-2 style)
 
 export interface LunarFeatureConfig {
   seed: number;
@@ -223,7 +223,7 @@ export function generateLunarCanvas(config: LunarFeatureConfig): string {
 
   ctx.restore();
 
-  // Fine detector line-scan calibration marks (LROC / OHRC pushbroom detector raster)
+  // Fine detector line-scan calibration marks (ISRO OHRC / TMC-2 pushbroom detector raster)
   ctx.fillStyle = 'rgba(255, 255, 255, 0.012)';
   for (let y = 0; y < height; y += 3) {
     ctx.fillRect(0, y, width, 1);

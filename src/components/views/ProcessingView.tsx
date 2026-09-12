@@ -29,7 +29,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     description: 'Loading orbital ephemeris, calculating phase angle geometry, and equalizing extreme solar illumination differences.',
     durationMs: 1400,
     telemetryLogs: [
-      'Loading NAIF SPICE kernels: CH2_ORBITER_V04.BSP, LRO_NO_ASPS_2022.BSP...',
+      'Loading NAIF SPICE kernels: CH2_ORBITER_V04.BSP, CH1_ORBITER_V02.BSP...',
       'Ephemeris sync verified: Coordinate Frame MOON_ME (IAU 2015).',
       'Computing solar phase angle delta: Source (12.0°) vs Ref (68.0°) = Δ 56.0°.',
       'Applying radiometric photometric correction & dark shadow masking.'
@@ -98,7 +98,11 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
   const [stageProgress, setStageProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const terminalBottomRef = useRef<HTMLDivElement>(null);
-  const startTimeRef = useRef(Date.now());
+  const startTimeRef = useRef(0);
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+  }, []);
 
   // Auto-scroll terminal logs
   useEffect(() => {
@@ -318,7 +322,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       >
         <div className="rounded-lg bg-black p-4 border border-white/10 h-64 overflow-y-auto space-y-1.5 text-xs text-regolith-300 font-mono scrollbar-thin">
           <div className="text-regolith-600 text-[10px] pb-1 border-b border-white/5 flex items-center justify-between">
-            <span>--- START OF TELEMETRY STREAM // LICE ORBITAL NODE ---</span>
+            <span>--- START OF TELEMETRY STREAM // CHANDRADRISHTI ORBITAL NODE ---</span>
             <span>IAU 2015 FRAME</span>
           </div>
 
