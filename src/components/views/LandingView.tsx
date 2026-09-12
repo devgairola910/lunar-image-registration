@@ -32,36 +32,36 @@ export const LandingView: React.FC<LandingViewProps> = ({
       <section className="relative pt-6 sm:pt-10 overflow-hidden">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           {/* Left Column: Mission Description & Action CTA */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7 space-y-6 mission-card p-6 sm:p-8 rounded-2xl border border-white/15 backdrop-blur-2xl shadow-2xl">
             <div className="inline-flex items-center space-x-2.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse shadow-[0_0_8px_#22c55e]"></span>
               <span className="font-semibold tracking-wider text-regolith-200">ISRO CHANDRAYAAN MISSION NODE</span>
               <span className="text-regolith-600">•</span>
               <span>SYSTEMS NOMINAL</span>
             </div>
 
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white font-display leading-[1.1]">
+            <h1 className="text-3xl sm:text-5xl lg:text-5xl font-bold tracking-tight text-white font-display leading-[1.15]">
               ChandraDrishti <br />
               <span className="text-regolith-300">
                 Lunar Vision Engine
               </span>
             </h1>
 
-            <p className="text-base sm:text-lg text-regolith-400 max-w-2xl leading-relaxed">
-              Find pixel-accurate correspondences between <span className="text-white font-medium">Chandrayaan-2</span> optical payloads (OHRC, TMC-2, IIRS) and <span className="text-white font-medium">ISRO reference imagery</span>—invariant to solar elevation disparity, dynamic shadow displacements, and optical scale divergence.
+            <p className="text-base sm:text-lg text-regolith-300 max-w-2xl leading-relaxed">
+              Find pixel-accurate correspondences between <span className="text-white font-semibold">Chandrayaan-2</span> optical payloads (OHRC, TMC-2, IIRS) and <span className="text-white font-semibold">ISRO reference imagery</span>—invariant to solar elevation disparity, dynamic shadow displacements, and optical scale divergence.
             </p>
 
             {/* Precision Technical Telemetry Chips */}
             <div className="flex flex-wrap gap-2.5 pt-2">
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900 border border-white/10 font-mono text-xs text-regolith-300 shadow-sm">
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-950/80 border border-white/15 font-mono text-xs text-regolith-200 shadow-sm backdrop-blur-sm">
                 <Target className="w-3.5 h-3.5 text-regolith-100" />
                 <span>Accuracy: <strong className="text-white">&lt; 0.80 px RMSE</strong></span>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900 border border-white/10 font-mono text-xs text-regolith-300 shadow-sm">
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-950/80 border border-white/15 font-mono text-xs text-regolith-200 shadow-sm backdrop-blur-sm">
                 <Layers className="w-3.5 h-3.5 text-regolith-100" />
                 <span>Sensors: <strong className="text-white">OHRC • TMC-2 • IIRS</strong></span>
               </div>
-              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900 border border-white/10 font-mono text-xs text-regolith-300 shadow-sm">
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-950/80 border border-white/15 font-mono text-xs text-regolith-200 shadow-sm backdrop-blur-sm">
                 <Globe2 className="w-3.5 h-3.5 text-earth-400" />
                 <span>Agency: <strong className="text-white">ISRO SAC / ISSDC</strong></span>
               </div>
@@ -85,7 +85,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                   soundFx.playClick();
                   if (presets.length > 0) onSelectPreset(presets[0]);
                 }}
-                className="inline-flex items-center space-x-2 px-4 py-3.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-750 border border-white/15 text-regolith-200 hover:text-white font-mono text-xs transition-all duration-150 cursor-pointer"
+                className="inline-flex items-center space-x-2 px-4 py-3.5 rounded-xl bg-obsidian-900/90 hover:bg-obsidian-800 border border-white/20 text-regolith-200 hover:text-white font-mono text-xs transition-all duration-150 cursor-pointer shadow-md"
               >
                 <Play className="w-3.5 h-3.5 text-regolith-400" />
                 <span>Demo: Clavius Crater</span>
@@ -331,7 +331,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
       </section>
 
       {/* Geodetic Precision Highlights */}
-      <section className="rounded-2xl p-6 sm:p-8 bg-obsidian-900 border border-white/10 relative overflow-hidden">
+      <section className="rounded-2xl p-6 sm:p-8 mission-card border border-white/15 relative overflow-hidden backdrop-blur-2xl shadow-2xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
           <div className="lg:col-span-2 space-y-3">
             <h3 className="text-xl font-bold text-white font-display">

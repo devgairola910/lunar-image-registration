@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Starfield } from './components/common/Starfield';
+import { Background } from './components/common/Background';
 import { Header } from './components/common/Header';
 import { LandingView } from './components/views/LandingView';
 import { UploadView } from './components/views/UploadView';
@@ -115,9 +115,9 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-space-950 text-slate-100 flex flex-col relative selection:bg-electron-500/30 selection:text-electron-300">
-      {/* Background Twinkling Starfield */}
-      <Starfield />
+    <div className="min-h-screen bg-obsidian-950 text-slate-100 flex flex-col relative selection:bg-white/20 selection:text-white">
+      {/* Background Spacecraft Orbital Imagery & Starfield */}
+      <Background />
 
       {/* Mission Control Top Navigation Bar */}
       <Header
@@ -195,21 +195,21 @@ export function App() {
       </main>
 
       {/* Mission Control Footer */}
-      <footer className="z-10 border-t border-white/10 bg-space-950/80 backdrop-blur-md py-6 px-4 sm:px-8 mt-auto text-xs font-mono text-slate-500">
+      <footer className="z-10 border-t border-white/10 bg-obsidian-950/85 backdrop-blur-xl py-6 px-4 sm:px-8 mt-auto text-xs font-mono text-regolith-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <span className="w-2 h-2 rounded-full bg-mission-teal"></span>
-            <span className="text-slate-300 font-bold">CHANDRADRISHTI PROTOCOL v2.4</span>
+            <span className="w-2 h-2 rounded-full bg-telemetry-green shadow-[0_0_8px_#22c55e]"></span>
+            <span className="text-regolith-200 font-bold tracking-wide">CHANDRADRISHTI PROTOCOL v2.4</span>
             <span>•</span>
-            <span>ISRO CHANDRAYAAN LUNAR CORRESPONDENCE NODE (SAC / ISSDC)</span>
+            <span className="text-regolith-400">ISRO CHANDRAYAAN LUNAR CORRESPONDENCE NODE (SAC / ISSDC)</span>
           </div>
 
-          <div className="flex items-center space-x-4 text-slate-400">
+          <div className="flex items-center space-x-4 text-regolith-400">
             <span>SPICE KERNEL IAU-2015</span>
             <span>•</span>
             <span>MAGSAC++ / LoFTR-LUNAR</span>
             <span>•</span>
-            <span className="text-electron-400">SUB-PIXEL OPTIMIZED</span>
+            <span className="text-earth-400 font-semibold">SUB-PIXEL OPTIMIZED</span>
           </div>
         </div>
       </footer>
