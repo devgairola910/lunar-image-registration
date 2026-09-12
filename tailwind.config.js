@@ -44,9 +44,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Space Grotesk"', 'Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '"Outfit"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', '"Share Tech Mono"', 'ui-monospace', 'monospace'],
-        display: ['"Space Grotesk"', 'sans-serif'],
+        display: ['"Rajdhani"', '"Plus Jakarta Sans"', 'sans-serif'],
+        brand: ['"Orbitron"', '"Rajdhani"', 'sans-serif'],
       },
       boxShadow: {
         'instrument': '0 4px 20px -2px rgba(0, 0, 0, 0.7)',
