@@ -11,7 +11,6 @@ import {
 import { ReticleFrame } from '../common/ReticleFrame';
 import type { ImageMetadata, SensorType, PresetScenario } from '../../types/registration';
 import { SENSORS } from '../../utils/mockDataGenerator';
-import { soundFx } from '../../utils/soundEffects';
 
 interface UploadViewProps {
   sourceMeta: ImageMetadata;
@@ -46,7 +45,6 @@ export const UploadView: React.FC<UploadViewProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    soundFx.playClick();
     const reader = new FileReader();
     reader.onload = (event) => {
       const previewUrl = event.target?.result as string;
@@ -72,7 +70,6 @@ export const UploadView: React.FC<UploadViewProps> = ({
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    soundFx.playClick();
     const reader = new FileReader();
     reader.onload = (event) => {
       const previewUrl = event.target?.result as string;
@@ -101,7 +98,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <div className="text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
-            SENSOR INGESTION CONSOLE // STAGE 02
+            SENSOR INGESTION CONSOLE
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
             Optical Sensor Frames & Metadata
@@ -119,10 +116,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           {presets.map((p) => (
             <button
               key={p.id}
-              onClick={() => {
-                soundFx.playClick();
-                onSelectPreset(p);
-              }}
+              onClick={() => onSelectPreset(p)}
               className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
                 activePresetId === p.id
                   ? 'bg-regolith-800 text-white border-white/30 font-semibold'
@@ -134,10 +128,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           ))}
 
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onResetToDefault();
-            }}
+            onClick={onResetToDefault}
             title="Reset to default settings"
             className="p-1.5 rounded-lg bg-obsidian-900 border border-white/10 text-regolith-400 hover:text-white"
           >
@@ -524,10 +515,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
 
         <button
           disabled={!isReadyToRun}
-          onClick={() => {
-            soundFx.playClick();
-            onRunRegistration();
-          }}
+          onClick={onRunRegistration}
           className={`px-7 py-3 rounded-xl font-mono text-xs uppercase tracking-wider font-bold transition-all flex items-center space-x-2 ${
             isReadyToRun
               ? 'bg-white hover:bg-regolith-200 text-black shadow-lg hover:scale-105 cursor-pointer'

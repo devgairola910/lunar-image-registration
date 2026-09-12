@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import type { RegistrationMetrics, ImageMetadata, KeypointMatch } from '../../types/registration';
 import { downloadTelemetryJSON } from '../../utils/exportUtils';
-import { soundFx } from '../../utils/soundEffects';
 
 interface EvaluationReportModalProps {
   isOpen: boolean;
@@ -30,12 +29,10 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
   if (!isOpen) return null;
 
   const handlePrint = () => {
-    soundFx.playClick();
     window.print();
   };
 
   const handleDownloadJSON = () => {
-    soundFx.playClick();
     downloadTelemetryJSON(metrics, sourceMeta, referenceMeta, keypoints);
   };
 
@@ -59,10 +56,7 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
           </div>
 
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onClose();
-            }}
+            onClick={onClose}
             className="p-1.5 rounded-lg text-regolith-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />

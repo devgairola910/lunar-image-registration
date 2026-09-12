@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
 import type { PipelineStageInfo, RegistrationMetrics, ImageMetadata } from '../../types/registration';
-import { soundFx } from '../../utils/soundEffects';
 
 interface ProcessingViewProps {
   sourceMeta: ImageMetadata;
@@ -116,7 +115,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
 
     const runStage = (stageIdx: number) => {
       if (stageIdx >= STAGES.length) {
-        soundFx.playSuccessLock();
         setTimeout(() => {
           onComplete();
         }, 600);
@@ -148,7 +146,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       timer = setTimeout(() => {
         clearInterval(progressInterval);
         setStageProgress(100);
-        soundFx.playStageComplete();
         runStage(stageIdx + 1);
       }, stage.durationMs);
     };
@@ -162,8 +159,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
   }, [onComplete]);
 
   const handleSkip = () => {
-    soundFx.playClick();
-    soundFx.playSuccessLock();
     onComplete();
   };
 

@@ -5,7 +5,6 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import type { HistoricalRun } from '../../types/registration';
-import { soundFx } from '../../utils/soundEffects';
 
 interface HistoryViewProps {
   runs: HistoricalRun[];
@@ -52,10 +51,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
 
         <button
-          onClick={() => {
-            soundFx.playClick();
-            onNewRun();
-          }}
+          onClick={onNewRun}
           className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white hover:bg-regolith-200 text-black font-mono text-xs font-bold transition-all shadow-md self-start sm:self-auto cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5" />
@@ -70,10 +66,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           {['ALL', 'CH2_OHRC', 'CH2_TMC', 'CH2_IIRS'].map((sensor) => (
             <button
               key={sensor}
-              onClick={() => {
-                soundFx.playClick();
-                setSensorFilter(sensor);
-              }}
+              onClick={() => setSensorFilter(sensor)}
               className={`px-3 py-1.5 rounded-md transition-all whitespace-nowrap cursor-pointer ${
                 sensorFilter === sensor
                   ? 'bg-regolith-800 text-white font-bold'
@@ -103,10 +96,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         {filteredRuns.map((run) => (
           <div
             key={run.id}
-            onClick={() => {
-              soundFx.playClick();
-              onLoadRun(run);
-            }}
+            onClick={() => onLoadRun(run)}
             className="group cursor-pointer rounded-xl p-5 mission-card hover:mission-card-glow border border-white/10 hover:border-white/30 transition-all duration-200 flex flex-col justify-between space-y-4"
           >
             <div className="space-y-3">

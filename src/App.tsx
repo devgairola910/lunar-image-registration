@@ -18,7 +18,6 @@ import type {
   KeypointMatch, 
   HistoricalRun 
 } from './types/registration';
-import { soundFx } from './utils/soundEffects';
 
 export function App() {
   const [presets] = useState<PresetScenario[]>(() => getPresetScenarios());
@@ -133,10 +132,7 @@ export function App() {
       <main className="flex-1 z-10 px-4 sm:px-6 lg:px-8 pt-6">
         {currentView === 'landing' && (
           <LandingView
-            onStartRegistration={() => {
-              soundFx.playClick();
-              setCurrentView('upload');
-            }}
+            onStartRegistration={() => setCurrentView('upload')}
             onSelectPreset={handleSelectPreset}
             presets={presets}
           />
@@ -171,14 +167,8 @@ export function App() {
             referenceMeta={referenceMeta}
             metrics={keypointData.metrics}
             keypoints={keypointData.keypoints}
-            onStartNewRun={() => {
-              soundFx.playClick();
-              setCurrentView('upload');
-            }}
-            onViewHistory={() => {
-              soundFx.playClick();
-              setCurrentView('history');
-            }}
+            onStartNewRun={() => setCurrentView('upload')}
+            onViewHistory={() => setCurrentView('history')}
           />
         )}
 
@@ -186,10 +176,7 @@ export function App() {
           <HistoryView
             runs={historicalRuns}
             onLoadRun={handleLoadHistoricalRun}
-            onNewRun={() => {
-              soundFx.playClick();
-              setCurrentView('upload');
-            }}
+            onNewRun={() => setCurrentView('upload')}
           />
         )}
       </main>
@@ -198,7 +185,6 @@ export function App() {
       <footer className="z-10 border-t border-white/10 bg-obsidian-950/85 backdrop-blur-xl py-6 px-4 sm:px-8 mt-auto text-xs font-mono text-regolith-500">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center space-x-3">
-            <span className="w-2 h-2 rounded-full bg-telemetry-green shadow-[0_0_8px_#22c55e]"></span>
             <span className="text-regolith-200 font-bold tracking-wide">CHANDRADRISHTI PROTOCOL v2.4</span>
             <span>•</span>
             <span className="text-regolith-400">ISRO CHANDRAYAAN LUNAR CORRESPONDENCE NODE (SAC / ISSDC)</span>

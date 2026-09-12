@@ -12,7 +12,6 @@ import {
   Play
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
-import { soundFx } from '../../utils/soundEffects';
 import type { PresetScenario } from '../../types/registration';
 
 interface LandingViewProps {
@@ -35,7 +34,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
           <div className="lg:col-span-7 space-y-6 mission-card p-6 sm:p-8 rounded-2xl border border-white/15 backdrop-blur-2xl shadow-2xl">
             <div className="inline-flex items-center space-x-2.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
               <img src="/logo.png" alt="Logo" className="w-4 h-4 object-contain rounded-full bg-white/95 p-0.5" />
-              <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse shadow-[0_0_8px_#22c55e]"></span>
               <span className="font-semibold tracking-wider text-regolith-200">ISRO CHANDRAYAAN MISSION NODE</span>
               <span className="text-regolith-600">•</span>
               <span>SYSTEMS NOMINAL</span>
@@ -47,10 +45,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 Lunar Vision Engine
               </span>
             </h1>
-
-            <p className="text-base sm:text-lg text-regolith-300 max-w-2xl leading-relaxed">
-              Find pixel-accurate correspondences between <span className="text-white font-semibold">Chandrayaan-2</span> optical payloads (OHRC, TMC-2, IIRS) and <span className="text-white font-semibold">ISRO reference imagery</span>—invariant to solar elevation disparity, dynamic shadow displacements, and optical scale divergence.
-            </p>
 
             {/* Precision Technical Telemetry Chips */}
             <div className="flex flex-wrap gap-2.5 pt-2">
@@ -71,10 +65,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center gap-3 pt-3">
               <button
-                onClick={() => {
-                  soundFx.playClick();
-                  onStartRegistration();
-                }}
+                onClick={onStartRegistration}
                 className="group relative inline-flex items-center justify-center space-x-2.5 px-6 py-3.5 rounded-xl bg-white hover:bg-regolith-200 text-black font-semibold text-sm tracking-wide transition-all duration-200 shadow-lg cursor-pointer"
               >
                 <span>Launch Registration Workflow</span>
@@ -83,7 +74,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
               <button
                 onClick={() => {
-                  soundFx.playClick();
                   if (presets.length > 0) onSelectPreset(presets[0]);
                 }}
                 className="inline-flex items-center space-x-2 px-4 py-3.5 rounded-xl bg-obsidian-900/90 hover:bg-obsidian-800 border border-white/20 text-regolith-200 hover:text-white font-mono text-xs transition-all duration-150 cursor-pointer shadow-md"
@@ -116,11 +106,10 @@ export const LandingView: React.FC<LandingViewProps> = ({
               {/* Animated Optical Radar Sweep Beam */}
               <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-white/12 to-transparent pointer-events-none animate-scan-beam"></div>
 
-              {/* Pulsating Keypoint Correspondence Locks on real crater terrain */}
+              {/* Keypoint Correspondence Locks on real crater terrain */}
               <div className="absolute top-[48%] left-[45%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                <div className="w-9 h-9 rounded-full border border-telemetry-green/70 flex items-center justify-center animate-ping opacity-50"></div>
-                <div className="absolute inset-0 w-9 h-9 rounded-full border border-white/70 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 bg-telemetry-green rounded-full shadow-[0_0_8px_#22c55e]"></div>
+                <div className="w-8 h-8 rounded-full border border-white/70 flex items-center justify-center">
+                  <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
                 <span className="absolute left-10 top-1/2 -translate-y-1/2 text-[9px] font-mono text-white bg-black/90 px-2 py-0.5 rounded border border-white/20 whitespace-nowrap shadow-md">
                   KP #01: TYCHO PEAK [0.38px]
@@ -167,8 +156,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
               </div>
 
               {/* Top Sensor Ingestion Telemetry Badge */}
-              <div className="absolute top-3 left-3 flex items-center space-x-1.5 px-2.5 py-1 rounded bg-black/85 backdrop-blur-md border border-white/20 text-[10px] font-mono text-white shadow-lg">
-                <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse"></span>
+              <div className="absolute top-3 left-3 flex items-center px-2.5 py-1 rounded bg-black/85 backdrop-blur-md border border-white/20 text-[10px] font-mono text-white shadow-lg">
                 <span>CH-2 OHRC // TARGET: TYCHO COMPLEX</span>
               </div>
 
@@ -182,8 +170,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 <div className="px-2 py-1 rounded bg-black/85 backdrop-blur-md border border-white/20 text-[9px] font-mono text-regolith-300">
                   LAT: 43.31°S • LON: 11.36°W
                 </div>
-                <div className="px-2 py-1 rounded bg-black/85 backdrop-blur-md border border-telemetry-green/40 text-[9px] font-mono text-telemetry-green flex items-center space-x-1.5 shadow-[0_0_10px_rgba(34,197,94,0.15)]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green"></span>
+                <div className="px-2 py-1 rounded bg-black/85 backdrop-blur-md border border-white/20 text-[9px] font-mono text-regolith-200 flex items-center">
                   <span>OPTICAL LOCK 94.2%</span>
                 </div>
               </div>
@@ -212,10 +199,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
           {presets.map((preset) => (
             <div
               key={preset.id}
-              onClick={() => {
-                soundFx.playClick();
-                onSelectPreset(preset);
-              }}
+              onClick={() => onSelectPreset(preset)}
               className="group relative cursor-pointer rounded-xl p-5 mission-card hover:mission-card-glow border border-white/10 hover:border-white/30 transition-all duration-200 flex flex-col justify-between"
             >
               <div className="space-y-3">
@@ -312,10 +296,9 @@ export const LandingView: React.FC<LandingViewProps> = ({
           ].map((stage) => {
             const Icon = stage.icon;
             return (
-              <ReticleFrame key={stage.step} className="flex flex-col justify-between">
+              <ReticleFrame key={stage.title} className="flex flex-col justify-between">
                 <div className="space-y-2 font-mono">
-                  <div className="flex items-center justify-between text-xs text-regolith-500">
-                    <span className="font-bold">STAGE {stage.step}</span>
+                  <div className="flex items-center justify-end text-xs text-regolith-400">
                     <Icon className="w-4 h-4 text-regolith-300" />
                   </div>
                   <h4 className="text-xs font-bold text-white font-display">
@@ -363,10 +346,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
           <div className="flex justify-center lg:justify-end">
             <button
-              onClick={() => {
-                soundFx.playClick();
-                onStartRegistration();
-              }}
+              onClick={onStartRegistration}
               className="w-full sm:w-auto px-6 py-4 rounded-xl bg-white hover:bg-regolith-200 text-black font-semibold text-xs tracking-wider uppercase font-mono transition-all flex items-center justify-center space-x-3 cursor-pointer shadow-lg"
             >
               <span>Ingest Sensor Data</span>

@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { soundFx } from '../../utils/soundEffects';
 
 export type ViewMode = 'split' | 'sideBySide' | 'blend' | 'difference' | 'vectors';
 
@@ -66,7 +65,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 p-2.5 rounded-xl bg-obsidian-900 border border-white/10 backdrop-blur-md text-xs font-mono">
-      {/* View Mode Selector Tabs */}
+      {/* View Mode Selector Buttons */}
       <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-obsidian-950 border border-white/10 overflow-x-auto">
         {modes.map((m) => {
           const Icon = m.icon;
@@ -74,10 +73,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
           return (
             <button
               key={m.id}
-              onClick={() => {
-                soundFx.playClick();
-                onChangeViewMode(m.id);
-              }}
+              onClick={() => onChangeViewMode(m.id)}
               className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-md transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-regolith-800 text-white border border-white/20 font-semibold shadow-sm'
@@ -127,10 +123,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
         {/* Keypoints Toggle */}
         <div className="flex items-center rounded-lg bg-obsidian-950 border border-white/10 p-0.5">
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onToggleKeypoints();
-            }}
+            onClick={onToggleKeypoints}
             title="Toggle Keypoints Overlay"
             className={`flex items-center space-x-1 px-2 py-1 rounded transition-all cursor-pointer ${
               showKeypoints
@@ -147,10 +140,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
               {(['all', 'inliers', 'outliers'] as const).map((filter) => (
                 <button
                   key={filter}
-                  onClick={() => {
-                    soundFx.playClick();
-                    onChangeKeypointFilter(filter);
-                  }}
+                  onClick={() => onChangeKeypointFilter(filter)}
                   className={`px-1.5 py-0.5 rounded uppercase cursor-pointer ${
                     keypointFilter === filter
                       ? 'bg-white/15 text-white font-bold'
@@ -166,10 +156,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
         {/* Tile Grid Toggle */}
         <button
-          onClick={() => {
-            soundFx.playClick();
-            onToggleTileGrid();
-          }}
+          onClick={onToggleTileGrid}
           title="Toggle 8x8 Tile Partition Grid"
           className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
             showTileGrid
@@ -182,10 +169,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
 
         {/* Heatmap Toggle */}
         <button
-          onClick={() => {
-            soundFx.playClick();
-            onToggleHeatmap();
-          }}
+          onClick={onToggleHeatmap}
           title="Toggle Spatial Coverage Heatmap"
           className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
             showHeatmap
@@ -199,10 +183,7 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
         {/* Zoom Controls */}
         <div className="flex items-center space-x-1 pl-2 border-l border-white/10">
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onZoomOut();
-            }}
+            onClick={onZoomOut}
             title="Zoom Out"
             className="p-1.5 rounded-lg bg-obsidian-950 text-regolith-400 hover:text-white border border-white/10 cursor-pointer"
           >
@@ -212,20 +193,14 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
             {Math.round(zoom * 100)}%
           </span>
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onZoomIn();
-            }}
+            onClick={onZoomIn}
             title="Zoom In"
             className="p-1.5 rounded-lg bg-obsidian-950 text-regolith-400 hover:text-white border border-white/10 cursor-pointer"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onResetZoom();
-            }}
+            onClick={onResetZoom}
             title="Reset Zoom & Pan"
             className="p-1.5 rounded-lg bg-obsidian-950 text-regolith-400 hover:text-white border border-white/10 cursor-pointer"
           >

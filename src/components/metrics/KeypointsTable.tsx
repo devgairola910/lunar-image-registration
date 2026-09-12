@@ -2,7 +2,6 @@ import React, { useState, useMemo } from 'react';
 import type { KeypointMatch } from '../../types/registration';
 import { ReticleFrame } from '../common/ReticleFrame';
 import { Search, ChevronLeft, ChevronRight, ArrowUpDown, CheckCircle2, XCircle, Crosshair } from 'lucide-react';
-import { soundFx } from '../../utils/soundEffects';
 
 interface KeypointsTableProps {
   keypoints: KeypointMatch[];
@@ -59,7 +58,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
   }, [filteredKeypoints, page]);
 
   const handleSort = (field: 'id' | 'residualError' | 'confidence') => {
-    soundFx.playClick();
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -86,7 +84,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
           <div className="flex items-center space-x-1 p-0.5 rounded-lg bg-obsidian-950 border border-white/10">
             <button
               onClick={() => {
-                soundFx.playClick();
                 setFilterType('all');
                 setPage(1);
               }}
@@ -100,7 +97,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
             </button>
             <button
               onClick={() => {
-                soundFx.playClick();
                 setFilterType('inliers');
                 setPage(1);
               }}
@@ -114,7 +110,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
             </button>
             <button
               onClick={() => {
-                soundFx.playClick();
                 setFilterType('outliers');
                 setPage(1);
               }}
@@ -196,7 +191,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
                     <tr
                       key={kp.id}
                       onClick={() => {
-                        soundFx.playClick();
                         if (onSelectKeypoint) onSelectKeypoint(kp.id);
                       }}
                       className={`cursor-pointer transition-colors ${
@@ -255,7 +249,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            soundFx.playClick();
                             if (onSelectKeypoint) onSelectKeypoint(kp.id);
                           }}
                           className="p-1 rounded hover:bg-white/10 text-regolith-400 hover:text-white cursor-pointer"
@@ -284,7 +277,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
             <button
               disabled={page <= 1}
               onClick={() => {
-                soundFx.playClick();
                 setPage(p => Math.max(1, p - 1));
               }}
               className="p-1.5 rounded bg-obsidian-950 border border-white/10 hover:border-white/30 text-regolith-300 disabled:opacity-30 cursor-pointer"
@@ -297,7 +289,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
             <button
               disabled={page >= totalPages}
               onClick={() => {
-                soundFx.playClick();
                 setPage(p => Math.min(totalPages, p + 1));
               }}
               className="p-1.5 rounded bg-obsidian-950 border border-white/10 hover:border-white/30 text-regolith-300 disabled:opacity-30 cursor-pointer"

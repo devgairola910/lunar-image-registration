@@ -24,7 +24,6 @@ import {
   downloadKeypointsCSV, 
   downloadSimulatedGeoTIFF, 
 } from '../../utils/exportUtils';
-import { soundFx } from '../../utils/soundEffects';
 
 interface ResultsViewProps {
   sourceMeta: ImageMetadata;
@@ -60,19 +59,16 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
   };
 
   const handleDownloadCSV = () => {
-    soundFx.playClick();
     downloadKeypointsCSV(keypoints, sourceMeta, referenceMeta);
     showToast('Match points exported successfully to CSV.');
   };
 
   const handleDownloadGeoTIFF = () => {
-    soundFx.playClick();
     downloadSimulatedGeoTIFF(sourceMeta, metrics);
     showToast('Registered orthorectified image & worldfile (.tfw) generated.');
   };
 
   const handleOpenReport = () => {
-    soundFx.playClick();
     setIsReportModalOpen(true);
   };
 
@@ -90,7 +86,6 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <div className="flex items-center space-x-2 text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse"></span>
             <span>Registration Sequence Locked // Sub-Pixel Convergence</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
@@ -112,10 +107,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </button>
 
           <button
-            onClick={() => {
-              soundFx.playClick();
-              onStartNewRun();
-            }}
+            onClick={onStartNewRun}
             className="inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-white hover:bg-regolith-200 text-black font-mono text-xs font-bold transition-all shadow-md cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
