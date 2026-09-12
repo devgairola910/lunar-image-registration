@@ -44,10 +44,10 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', '"Outfit"', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', '"Share Tech Mono"', 'ui-monospace', 'monospace'],
-        display: ['"Rajdhani"', '"Plus Jakarta Sans"', 'sans-serif'],
-        brand: ['"Orbitron"', '"Rajdhani"', 'sans-serif'],
+        sans: ['"Noto Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"Noto Sans Mono"', '"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        display: ['"Noto Sans"', 'sans-serif'],
+        brand: ['"Noto Sans"', 'sans-serif'],
       },
       boxShadow: {
         'instrument': '0 4px 20px -2px rgba(0, 0, 0, 0.7)',

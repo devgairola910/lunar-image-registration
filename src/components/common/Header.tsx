@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Compass, 
   Volume2, 
   VolumeX, 
   Radio, 
@@ -97,13 +96,16 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main navigation header */}
       <div className="px-4 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-4">
-        {/* Brand & Project title */}
         <div 
           onClick={() => { soundFx.playClick(); onNavigate('landing'); }}
           className="flex items-center space-x-3 cursor-pointer group"
         >
-          <div className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-obsidian-800 border border-white/15 group-hover:border-white/30 transition-all duration-200 shadow-instrument">
-            <Compass className="w-4 h-4 text-regolith-100 group-hover:rotate-45 transition-transform duration-300" />
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-white/95 border border-white/25 p-1 group-hover:border-white/60 transition-all duration-200 shadow-lg group-hover:scale-105 overflow-hidden flex-shrink-0">
+            <img 
+              src="/logo.png" 
+              alt="ChandraDrishti Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <div className="flex items-center space-x-2">

@@ -34,6 +34,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
           {/* Left Column: Mission Description & Action CTA */}
           <div className="lg:col-span-7 space-y-6 mission-card p-6 sm:p-8 rounded-2xl border border-white/15 backdrop-blur-2xl shadow-2xl">
             <div className="inline-flex items-center space-x-2.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
+              <img src="/logo.png" alt="Logo" className="w-4 h-4 object-contain rounded-full bg-white/95 p-0.5" />
               <span className="w-1.5 h-1.5 rounded-full bg-telemetry-green animate-pulse shadow-[0_0_8px_#22c55e]"></span>
               <span className="font-semibold tracking-wider text-regolith-200">ISRO CHANDRAYAAN MISSION NODE</span>
               <span className="text-regolith-600">•</span>
