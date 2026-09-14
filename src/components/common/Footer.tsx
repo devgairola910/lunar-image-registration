@@ -238,6 +238,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             {/* Headquarters details */}
             <div className="md:col-span-7 space-y-2.5">
               <div className="flex items-center space-x-2 text-white font-bold text-xs">
+                <img src="/emblem-white.png" alt="State Emblem of India" className="h-4.5 w-auto object-contain opacity-90 select-none" />
                 <Building className="w-4 h-4 text-earth-400" />
                 <span>Space Applications Centre (SAC), Indian Space Research Organisation</span>
               </div>
@@ -339,6 +340,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           {/* Bottom Copyright & Disclaimer Row */}
           <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-regolith-500">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-80 select-none" />
               <span className="text-regolith-300 font-bold">CHANDRADRISHTI CORE v2.4.1</span>
               <span>•</span>
               <span>© {new Date().getFullYear()} Space Applications Centre (SAC), Indian Space Research Organisation (ISRO).</span>
@@ -365,7 +367,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto gov-card p-6 sm:p-8 rounded-2xl border border-white/30 shadow-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-white/15 pb-4">
               <div className="flex items-center space-x-3">
-                <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain rounded-lg bg-white p-0.5" />
+                <div className="flex items-center space-x-1.5 p-1 rounded-lg bg-white/95 border border-white/20">
+                  <img src="/emblem-transparent.png" alt="State Emblem of India" className="h-7 w-auto object-contain" />
+                  <img src="/logo.png" alt="ISRO Logo" className="w-7 h-7 object-contain" />
+                </div>
                 <div>
                   <h3 className="text-xl font-bold text-white font-display">About ChandraDrishti</h3>
                   <p className="text-xs text-regolith-400 font-mono">Planetary Remote Sensing Division, SAC ISRO</p>

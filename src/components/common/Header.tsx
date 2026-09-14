@@ -47,6 +47,11 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Official Government of India & ISRO Departmental Header Banner */}
       <div className="border-b border-white/10 bg-obsidian-900/90 px-4 lg:px-8 py-1.5 flex flex-wrap items-center justify-between text-[11px] font-mono text-regolith-400">
         <div className="flex items-center space-x-2 sm:space-x-3">
+          <img 
+            src="/emblem-white.png" 
+            alt="State Emblem of India" 
+            className="h-4.5 w-auto object-contain opacity-90 select-none" 
+          />
           <span className="font-semibold text-regolith-200 tracking-wide">
             भारत सरकार | Government of India
           </span>

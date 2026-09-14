@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { 
   ArrowRight, 
   Play,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import type { PresetScenario } from '../../types/registration';
 
@@ -30,6 +31,23 @@ export const LandingView: React.FC<LandingViewProps> = ({
           {/* Left Column: Mission Overview */}
           <div className="lg:col-span-7 space-y-6 gov-card p-6 sm:p-10 rounded-2xl border border-white/20 backdrop-blur-2xl shadow-2xl">
             
+            {/* Status Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-mono font-semibold">
+                <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-95" />
+                <span className="text-white/25">|</span>
+                <img src="/logo.png" alt="ISRO Crest" className="w-4 h-4 object-contain rounded-full bg-white p-0.5" />
+                <span>CHANDRAYAAN PAYLOAD ENGINE</span>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-earth-600/20 border border-earth-400/40 text-earth-300 text-xs font-mono">
+                <ShieldCheck className="w-3.5 h-3.5 text-earth-300" />
+                <span>SUB-PIXEL CORE</span>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span>SYSTEM ONLINE</span>
+              </div>
+            </div>
             {/* Title & Subtitle */}
             <div className="space-y-2">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.1]">

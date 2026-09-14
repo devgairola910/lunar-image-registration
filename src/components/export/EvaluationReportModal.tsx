@@ -1,10 +1,8 @@
 import React from 'react';
 import { 
   X, 
-  FileText, 
   Download, 
   Printer, 
-  ShieldCheck, 
 } from 'lucide-react';
 import type { RegistrationMetrics, ImageMetadata, KeypointMatch } from '../../types/registration';
 import { downloadTelemetryJSON } from '../../utils/exportUtils';
@@ -42,8 +40,8 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-black border-b border-white/10">
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-white/10 text-white border border-white/15">
-              <FileText className="w-5 h-5" />
+            <div className="flex items-center justify-center p-1.5 rounded-lg bg-white/10 border border-white/15">
+              <img src="/emblem-white.png" alt="State Emblem of India" className="h-6 w-auto object-contain opacity-95" />
             </div>
             <div>
               <h3 className="text-base font-bold text-white font-display">
@@ -69,7 +67,7 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
           <div className="rounded-xl p-4 bg-black/80 border border-white/10 space-y-3">
             <div className="flex items-center justify-between border-b border-white/10 pb-2">
               <div className="flex items-center space-x-2">
-                <ShieldCheck className="w-4 h-4 text-regolith-300" />
+                <img src="/emblem-white.png" alt="State Emblem of India" className="h-4.5 w-auto object-contain opacity-90" />
                 <span className="font-bold text-white uppercase tracking-wider">
                   Executive Geodetic Evaluation
                 </span>
