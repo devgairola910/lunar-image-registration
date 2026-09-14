@@ -84,27 +84,15 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </div>
           </div>
 
-          {/* Right Column: Authentic High-Resolution Lunar Orbital Surface Imagery with Mission Control HUD */}
+          {/* Right Column: Authentic High-Resolution Lunar Orbital Surface Imagery */}
           <div className="lg:col-span-5 flex justify-center items-center py-2 sm:py-4">
-            <div className="relative w-full max-w-[340px] sm:max-w-md aspect-[4/5] sm:aspect-square rounded-2xl overflow-hidden bg-black border border-white/20 shadow-2xl group">
+            <div className="relative w-full max-w-[340px] sm:max-w-md aspect-[4/5] sm:aspect-square rounded-2xl overflow-hidden bg-black group">
               {/* Authentic High-Resolution Lunar Orbital Surface Image */}
               <img
                 src="/lunar_clavius_reference.png"
                 alt="ISRO Chandrayaan-2 Real Lunar Orbital Panchromatic Surface Imagery"
-                className="w-full h-full object-cover object-center filter contrast-115 brightness-95 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+                className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out"
               />
-
-              {/* Mission Control CRT / Detector Pushbroom Scanlines Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/75 pointer-events-none"></div>
-              <div 
-                className="absolute inset-0 pointer-events-none opacity-20"
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px)'
-                }}
-              ></div>
-
-              {/* Animated Optical Radar Sweep Beam */}
-              <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-white/12 to-transparent pointer-events-none animate-scan-beam"></div>
 
               {/* Keypoint Correspondence Locks on real crater terrain */}
               <div className="absolute top-[48%] left-[45%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
@@ -134,27 +122,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 </span>
               </div>
 
-              {/* Precision Targeting Reticle HUD with Corner Brackets */}
-              <div className="absolute inset-3 border border-white/15 pointer-events-none">
-                <div className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 border-white/80"></div>
-                <div className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 border-white/80"></div>
-                <div className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 border-white/80"></div>
-                <div className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 border-white/80"></div>
-
-                {/* Sub-grid coordinate fiducials */}
-                <div className="absolute top-1/2 left-0 w-2.5 border-t border-white/40"></div>
-                <div className="absolute top-1/2 right-0 w-2.5 border-t border-white/40"></div>
-                <div className="absolute top-0 left-1/2 h-2.5 border-l border-white/40"></div>
-                <div className="absolute bottom-0 left-1/2 h-2.5 border-l border-white/40"></div>
-
-                {/* Central Optical Boresight Crosshair */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 border border-white/20 rounded-full flex items-center justify-center">
-                    <div className="w-1 h-1 bg-white/70 rounded-full"></div>
-                  </div>
-                </div>
-              </div>
-
               {/* Top Sensor Ingestion Telemetry Badge */}
               <div className="absolute top-3 left-3 flex items-center px-2.5 py-1 rounded bg-black/85 backdrop-blur-md border border-white/20 text-[10px] font-mono text-white shadow-lg">
                 <span>CH-2 OHRC // TARGET: TYCHO COMPLEX</span>
@@ -181,7 +148,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
       {/* Preset Planetary Test Scenarios */}
       <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/10 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 p-4 sm:p-5 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
           <div>
             <div className="text-regolith-300 font-mono text-xs uppercase tracking-wider font-semibold">
               PLANETARY VALIDATION TARGETS
@@ -190,10 +157,16 @@ export const LandingView: React.FC<LandingViewProps> = ({
               Select a Lunar Test Scenario
             </h2>
           </div>
-          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900/90 border border-white/15 text-xs text-regolith-200 font-mono shadow-sm backdrop-blur-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <button
+            onClick={() => {
+              if (presets.length > 0) onSelectPreset(presets[0]);
+            }}
+            className="group inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-obsidian-900/90 hover:bg-white/10 border border-white/20 hover:border-white/40 text-xs text-regolith-200 hover:text-white font-mono shadow-sm cursor-pointer transition-all duration-150 active:scale-[0.98]"
+            title="Preload calibrated Clavius Crater test scenario"
+          >
             <span>Click to preload calibrated sensor data & coordinates</span>
-          </div>
+            <ArrowRight className="w-3.5 h-3.5 text-regolith-400 group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -250,14 +223,15 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
       {/* 5-Stage Scientific Pipeline Architecture */}
       <section className="space-y-6">
-        <div className="text-center max-w-3xl mx-auto space-y-2">
-          <div className="text-regolith-400 font-mono text-xs uppercase tracking-wider">
-            ROBUST MULTI-MODAL PIPELINE
+        <div className="text-center max-w-3xl mx-auto p-6 sm:p-7 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-2xl space-y-2.5">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-mono text-regolith-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+            <span className="tracking-wider uppercase font-semibold">ROBUST MULTI-MODAL PIPELINE</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
             How The Correspondence Engine Works
           </h2>
-          <p className="text-sm text-regolith-400">
+          <p className="text-sm text-regolith-200 leading-relaxed max-w-2xl mx-auto">
             Engineered to overcome extreme lunar illumination disparity, dynamic shadow displacements, and optical scale divergence.
           </p>
         </div>
@@ -291,21 +265,24 @@ export const LandingView: React.FC<LandingViewProps> = ({
             {
               step: '05',
               title: 'Sub-Pixel Refinement',
-              desc: 'Parabolic covariance fitting achieving &lt;0.8 px precision with per-point confidence scoring.',
+              desc: 'Parabolic covariance fitting achieving < 0.8 px precision with per-point confidence scoring.',
               icon: Target,
             }
           ].map((stage) => {
             const Icon = stage.icon;
             return (
               <ReticleFrame key={stage.title} className="flex flex-col justify-between">
-                <div className="space-y-2 font-mono">
-                  <div className="flex items-center justify-end text-xs text-regolith-400">
-                    <Icon className="w-4 h-4 text-regolith-300" />
+                <div className="space-y-2.5 font-mono">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[10px] font-bold text-white px-1.5 py-0.5 rounded bg-white/10 border border-white/15">
+                      STAGE {stage.step}
+                    </span>
+                    <Icon className="w-4 h-4 text-regolith-200" />
                   </div>
                   <h4 className="text-xs font-bold text-white font-display">
                     {stage.title}
                   </h4>
-                  <p className="text-[11px] text-regolith-400 leading-relaxed">
+                  <p className="text-[11px] text-regolith-200 leading-relaxed">
                     {stage.desc}
                   </p>
                 </div>

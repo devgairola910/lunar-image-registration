@@ -95,32 +95,32 @@ export const UploadView: React.FC<UploadViewProps> = ({
   return (
     <div className="space-y-8 pb-16 max-w-7xl mx-auto">
       {/* Top Section: Title and Preset Quick-Select */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
         <div>
-          <div className="text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
+          <div className="text-regolith-300 font-mono text-xs uppercase tracking-wider mb-1 font-semibold">
             SENSOR INGESTION CONSOLE
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
             Optical Sensor Frames & Metadata
           </h2>
-          <p className="text-xs sm:text-sm text-regolith-400">
+          <p className="text-xs sm:text-sm text-regolith-200">
             Ingest Chandrayaan-2 moving sensor frames and ISRO baseline reference frames.
           </p>
         </div>
 
         {/* Quick Presets Bar */}
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-mono text-regolith-400 mr-1">
+          <span className="text-xs font-mono text-regolith-300 mr-1 font-medium">
             Preload Target:
           </span>
           {presets.map((p) => (
             <button
               key={p.id}
               onClick={() => onSelectPreset(p)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono transition-all border cursor-pointer ${
                 activePresetId === p.id
                   ? 'bg-regolith-800 text-white border-white/30 font-semibold'
-                  : 'bg-obsidian-900 text-regolith-400 border-white/10 hover:border-white/20 hover:text-white'
+                  : 'bg-obsidian-900 text-regolith-300 border-white/10 hover:border-white/20 hover:text-white'
               }`}
             >
               {p.title.split(' ')[0]}
@@ -130,7 +130,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           <button
             onClick={onResetToDefault}
             title="Reset to default settings"
-            className="p-1.5 rounded-lg bg-obsidian-900 border border-white/10 text-regolith-400 hover:text-white"
+            className="p-1.5 rounded-lg bg-obsidian-900 border border-white/10 text-regolith-300 hover:text-white cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>

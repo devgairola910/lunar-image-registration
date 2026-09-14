@@ -83,15 +83,15 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       )}
 
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
         <div>
-          <div className="flex items-center space-x-2 text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
+          <div className="flex items-center text-regolith-300 font-mono text-xs uppercase tracking-wider mb-1 font-semibold">
             <span>Registration Sequence Locked // Sub-Pixel Convergence</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
             Results & Verification Dashboard
           </h2>
-          <p className="text-xs sm:text-sm font-mono text-regolith-400">
+          <p className="text-xs sm:text-sm font-mono text-regolith-200">
             Source: <strong className="text-white">{sourceMeta.sensorType}</strong> ({sourceMeta.resolution}m/px) ↔ Reference: <strong className="text-white">{referenceMeta.sensorType}</strong> ({referenceMeta.resolution}m/px)
           </p>
         </div>

@@ -37,15 +37,15 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   return (
     <div className="space-y-8 pb-16 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
         <div>
-          <div className="text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
+          <div className="text-regolith-300 font-mono text-xs uppercase tracking-wider mb-1 font-semibold">
             MISSION ARCHIVE // HISTORICAL TELEMETRY
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
             Past Registration Runs
           </h2>
-          <p className="text-xs sm:text-sm text-regolith-400">
+          <p className="text-xs sm:text-sm text-regolith-200">
             Review past co-registration missions, inspect residuals, or reload into the active console.
           </p>
         </div>
