@@ -181,18 +181,19 @@ export const LandingView: React.FC<LandingViewProps> = ({
 
       {/* Preset Planetary Test Scenarios */}
       <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 border-b border-white/10 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/10 pb-3">
           <div>
-            <div className="text-regolith-400 font-mono text-xs uppercase tracking-wider">
+            <div className="text-regolith-300 font-mono text-xs uppercase tracking-wider font-semibold">
               PLANETARY VALIDATION TARGETS
             </div>
             <h2 className="text-xl sm:text-2xl font-bold text-white font-display">
               Select a Lunar Test Scenario
             </h2>
           </div>
-          <p className="text-xs text-regolith-400 font-mono">
-            Click to preload calibrated sensor data & coordinates
-          </p>
+          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-obsidian-900/90 border border-white/15 text-xs text-regolith-200 font-mono shadow-sm backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Click to preload calibrated sensor data & coordinates</span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -203,12 +204,12 @@ export const LandingView: React.FC<LandingViewProps> = ({
               className="group relative cursor-pointer rounded-xl p-5 mission-card hover:mission-card-glow border border-white/10 hover:border-white/30 transition-all duration-200 flex flex-col justify-between"
             >
               <div className="space-y-3">
-                {/* Tag */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-white/5 text-regolith-200 border border-white/10 uppercase">
+                {/* Tag & Location Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                  <span className="inline-flex self-start text-[9px] font-mono px-2 py-0.5 rounded bg-white/10 text-white border border-white/20 uppercase font-semibold tracking-wider whitespace-nowrap">
                     {preset.difficulty}
                   </span>
-                  <span className="text-[10px] font-mono text-regolith-400">
+                  <span className="text-[10px] font-mono text-regolith-300 bg-obsidian-950/70 px-2 py-0.5 rounded border border-white/10 truncate max-w-full">
                     {preset.location}
                   </span>
                 </div>
@@ -218,29 +219,29 @@ export const LandingView: React.FC<LandingViewProps> = ({
                   {preset.title}
                 </h3>
 
-                <p className="text-xs text-regolith-400 leading-relaxed">
+                <p className="text-xs text-regolith-300 leading-relaxed">
                   {preset.description}
                 </p>
 
                 {/* Sensor Pair Info */}
                 <div className="pt-2 grid grid-cols-2 gap-2 text-[11px] font-mono">
-                  <div className="p-2 rounded bg-obsidian-900 border border-white/5">
-                    <div className="text-[9px] text-regolith-500">SOURCE SENSOR</div>
-                    <div className="text-regolith-200 font-semibold truncate">{preset.sourceMeta.sensorType}</div>
-                    <div className="text-[10px] text-regolith-400">{preset.sourceMeta.resolution} m/px • {preset.sourceMeta.sunElevation}° Sun</div>
+                  <div className="p-2.5 rounded-lg bg-obsidian-900/90 border border-white/10">
+                    <div className="text-[9px] text-regolith-400 font-medium">SOURCE SENSOR</div>
+                    <div className="text-white font-semibold truncate">{preset.sourceMeta.sensorType}</div>
+                    <div className="text-[10px] text-regolith-300">{preset.sourceMeta.resolution} m/px • {preset.sourceMeta.sunElevation}° Sun</div>
                   </div>
-                  <div className="p-2 rounded bg-obsidian-900 border border-white/5">
-                    <div className="text-[9px] text-regolith-500">REFERENCE SENSOR</div>
-                    <div className="text-regolith-200 font-semibold truncate">{preset.referenceMeta.sensorType}</div>
-                    <div className="text-[10px] text-regolith-400">{preset.referenceMeta.resolution} m/px • {preset.referenceMeta.sunElevation}° Sun</div>
+                  <div className="p-2.5 rounded-lg bg-obsidian-900/90 border border-white/10">
+                    <div className="text-[9px] text-regolith-400 font-medium">REFERENCE SENSOR</div>
+                    <div className="text-white font-semibold truncate">{preset.referenceMeta.sensorType}</div>
+                    <div className="text-[10px] text-regolith-300">{preset.referenceMeta.resolution} m/px • {preset.referenceMeta.sunElevation}° Sun</div>
                   </div>
                 </div>
               </div>
 
               {/* Action link */}
-              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-xs font-mono text-regolith-400 group-hover:text-white">
-                <span>Load Ingestion Parameters</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs font-mono text-regolith-300 group-hover:text-white">
+                <span className="font-medium">Load Ingestion Parameters</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-regolith-300 group-hover:text-white" />
               </div>
             </div>
           ))}
