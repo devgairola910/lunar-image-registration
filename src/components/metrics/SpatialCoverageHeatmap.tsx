@@ -18,10 +18,10 @@ export const SpatialCoverageHeatmap: React.FC<SpatialCoverageHeatmapProps> = ({
     <ReticleFrame
       title="Spatial Uniformity Matrix"
       badge="8×8 PARTITION"
-      badgeColor="teal"
+      badgeColor="blue"
       headerRight={
         <div className="flex items-center space-x-1.5 text-xs font-mono text-telemetry-green font-bold">
-          <CheckCircle2 className="w-3.5 h-3.5" />
+          <CheckCircle2 className="w-3.5 h-3.5 text-telemetry-green" />
           <span>{spatialCoverage}% COVERED</span>
         </div>
       }
@@ -47,8 +47,8 @@ export const SpatialCoverageHeatmap: React.FC<SpatialCoverageHeatmapProps> = ({
                     !hasData
                       ? 'bg-obsidian-900/60 border border-white/5'
                       : isInlierSolid
-                      ? 'bg-emerald-500/70 hover:bg-emerald-400 border border-emerald-400'
-                      : 'bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-500/40'
+                      ? 'bg-emerald-500/75 hover:bg-emerald-400 border border-emerald-400/80 shadow-[0_0_8px_rgba(34,197,94,0.3)]'
+                      : 'bg-emerald-500/35 hover:bg-emerald-400/50 border border-emerald-500/40'
                   }`}
                   style={{
                     opacity: hasData ? Math.max(0.35, cell.densityScore) : 0.2
@@ -70,7 +70,7 @@ export const SpatialCoverageHeatmap: React.FC<SpatialCoverageHeatmapProps> = ({
               <span>
                 Tile [{hoveredCell.row},{hoveredCell.col}]:
               </span>
-              <span className="text-telemetry-green font-bold">
+              <span className="text-white font-bold">
                 {hoveredCell.inlierCount} Inliers / {hoveredCell.matchCount} Total
               </span>
             </div>
@@ -84,7 +84,7 @@ export const SpatialCoverageHeatmap: React.FC<SpatialCoverageHeatmapProps> = ({
                   <span className="w-2 h-2 rounded-sm bg-emerald-500"></span> High
                 </span>
                 <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-sm bg-emerald-500/30"></span> Low
+                  <span className="w-2 h-2 rounded-sm bg-emerald-500/35 border border-emerald-500/40"></span> Low
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="w-2 h-2 rounded-sm bg-obsidian-900 border border-white/10"></span> Empty

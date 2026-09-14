@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Background } from './components/common/Background';
 import { Header } from './components/common/Header';
+import { Footer } from './components/common/Footer';
 import { LandingView } from './components/views/LandingView';
 import { UploadView } from './components/views/UploadView';
 import { ProcessingView } from './components/views/ProcessingView';
@@ -36,6 +37,8 @@ export function App() {
   // Historical Runs
   const [historicalRuns, setHistoricalRuns] = useState<HistoricalRun[]>(() => getInitialHistoricalRuns());
   const [hasResults, setHasResults] = useState(true);
+  const [taskRunId, setTaskRunId] = useState<string>(() => `TASK-${Date.now()}`);
+  const [isPipelineComplete, setIsPipelineComplete] = useState<boolean>(false);
 
   // Handle Preset Selection
   const handleSelectPreset = (preset: PresetScenario) => {
@@ -51,6 +54,8 @@ export function App() {
     const data = generateKeypointDataset(600, 600, count, inlierRatio, seed);
     setKeypointData(data);
     setHasResults(true);
+    setTaskRunId(`TASK-${preset.id}-${Date.now()}`);
+    setIsPipelineComplete(false);
     setCurrentView('upload');
   };
 
@@ -78,14 +83,17 @@ export function App() {
     const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
     setKeypointData(generated);
 
+    // New task assigned: reset pipeline completed state & generate fresh task ID
+    setTaskRunId(`TASK-${Date.now()}`);
+    setIsPipelineComplete(false);
+
     setCurrentView('processing');
   };
 
-  // Processing Completed -> Store run and go to Results
-  const handleProcessingComplete = () => {
+  // Prepare results run without changing active view
+  const handleResultsReady = () => {
     setHasResults(true);
 
-    // Append to historical runs
     const newRun: HistoricalRun = {
       id: `RUN-${new Date().getFullYear()}-CH2-${Math.floor(1000 + Math.random() * 9000)}`,
       title: `${sourceMeta.sensorType} ↔ ${referenceMeta.sensorType} Co-Registration`,
@@ -97,7 +105,15 @@ export function App() {
       keypoints: keypointData.keypoints
     };
 
-    setHistoricalRuns(prev => [newRun, ...prev]);
+    setHistoricalRuns(prev => {
+      if (prev.some(r => r.id === newRun.id)) return prev;
+      return [newRun, ...prev];
+    });
+  };
+
+  // Explicit user transition to results view
+  const handleGoToResults = () => {
+    handleResultsReady();
     setCurrentView('results');
   };
 
@@ -156,8 +172,12 @@ export function App() {
           <ProcessingView
             sourceMeta={sourceMeta}
             referenceMeta={referenceMeta}
-            onComplete={handleProcessingComplete}
+            onComplete={handleGoToResults}
+            onResultsReady={handleResultsReady}
             metrics={keypointData.metrics}
+            taskRunId={taskRunId}
+            isAlreadyCompleted={isPipelineComplete}
+            onMarkCompleted={() => setIsPipelineComplete(true)}
           />
         )}
 
@@ -181,24 +201,8 @@ export function App() {
         )}
       </main>
 
-      {/* Mission Control Footer */}
-      <footer className="z-10 border-t border-white/10 bg-obsidian-950/85 backdrop-blur-xl py-6 px-4 sm:px-8 mt-auto text-xs font-mono text-regolith-500">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <span className="text-regolith-200 font-bold tracking-wide">CHANDRADRISHTI PROTOCOL v2.4</span>
-            <span>•</span>
-            <span className="text-regolith-400">ISRO CHANDRAYAAN LUNAR CORRESPONDENCE NODE (SAC / ISSDC)</span>
-          </div>
-
-          <div className="flex items-center space-x-4 text-regolith-400">
-            <span>SPICE KERNEL IAU-2015</span>
-            <span>•</span>
-            <span>MAGSAC++ / LoFTR-LUNAR</span>
-            <span>•</span>
-            <span className="text-earth-400 font-semibold">SUB-PIXEL OPTIMIZED</span>
-          </div>
-        </div>
-      </footer>
+      {/* Full-Fledged Commercial & Institutional Footer */}
+      <Footer onNavigate={setCurrentView} />
     </div>
   );
 }

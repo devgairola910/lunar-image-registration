@@ -501,8 +501,8 @@ export const UploadView: React.FC<UploadViewProps> = ({
       <div className="rounded-xl p-5 mission-card border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center space-x-3 text-xs font-mono">
           {isReadyToRun ? (
-            <div className="flex items-center space-x-2 text-telemetry-green">
-              <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <div className="flex items-center space-x-2 text-white font-semibold">
+              <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-regolith-300" />
               <span>SENSOR PAIR READY FOR 5-STAGE REGISTRATION SEQUENCE</span>
             </div>
           ) : (

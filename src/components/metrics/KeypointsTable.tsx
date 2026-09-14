@@ -225,7 +225,7 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
                         <div className="flex items-center space-x-1.5">
                           <div className="w-12 bg-obsidian-900 h-1.5 rounded-full overflow-hidden">
                             <div
-                              className="bg-white h-full"
+                              className={`h-full ${kp.isInlier ? 'bg-telemetry-green' : 'bg-white'}`}
                               style={{ width: `${kp.confidence * 100}%` }}
                             ></div>
                           </div>
@@ -234,8 +234,8 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
                       </td>
                       <td className="p-2.5">
                         {kp.isInlier ? (
-                          <span className="inline-flex items-center space-x-1 text-telemetry-green bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center space-x-1 text-telemetry-green bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30 text-[10px]">
+                            <CheckCircle2 className="w-3 h-3 text-telemetry-green" />
                             <span>INLIER</span>
                           </span>
                         ) : (

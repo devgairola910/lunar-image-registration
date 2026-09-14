@@ -23,7 +23,7 @@ export const ReticleFrame: React.FC<ReticleFrameProps> = ({
   const badgeColors = {
     neutral: 'bg-white/5 text-regolith-300 border-white/10',
     blue: 'bg-earth-500/10 text-earth-300 border-earth-500/20',
-    teal: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    teal: 'bg-white/10 text-regolith-200 border-white/20',
     amber: 'bg-amber-500/10 text-amber-300 border-amber-500/20',
     purple: 'bg-white/10 text-regolith-200 border-white/15',
     rose: 'bg-rose-500/10 text-rose-400 border-rose-500/20',

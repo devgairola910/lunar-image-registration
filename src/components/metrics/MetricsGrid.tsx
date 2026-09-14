@@ -28,7 +28,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
   // Donut chart data for inliers vs outliers
   const inlierPieData = [
     { name: 'Inliers', value: metrics.inlierMatches, color: '#22c55e' },
-    { name: 'Outliers', value: metrics.totalMatches - metrics.inlierMatches, color: '#ef4444' },
+    { name: 'Outliers', value: metrics.totalMatches - metrics.inlierMatches, color: '#f43f5e' },
   ];
 
   // Stage runtime chart data with neutral/monochrome palette
@@ -56,7 +56,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
                 <span className="text-sm font-normal text-regolith-400">px</span>
               </div>
               <div className="text-xs font-mono text-telemetry-green flex items-center gap-1 mt-1">
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <CheckCircle2 className="w-3.5 h-3.5 text-telemetry-green" />
                 <span>Optimal Lock (&lt; 0.80 px bound)</span>
               </div>
             </div>
@@ -85,7 +85,7 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
       <ReticleFrame
         title="MAGSAC++ Inlier Ratio"
         badge={`${metrics.inlierRatio}% PASS`}
-        badgeColor="teal"
+        badgeColor="neutral"
       >
         <div className="flex items-center justify-between">
           <div className="space-y-2 font-mono">
@@ -213,11 +213,11 @@ export const MetricsGrid: React.FC<MetricsGridProps> = ({ metrics }) => {
             <div>
               <div className="flex justify-between text-[10px] text-regolith-300 mb-1">
                 <span>Verified Inlier Matches</span>
-                <span className="font-bold text-white">{metrics.inlierMatches}</span>
+                <span className="font-bold text-telemetry-green">{metrics.inlierMatches}</span>
               </div>
               <div className="w-full bg-obsidian-950 h-1.5 rounded-full overflow-hidden">
                 <div
-                  className="bg-white h-full"
+                  className="bg-telemetry-green h-full"
                   style={{ width: `${(metrics.inlierMatches / metrics.totalMatches) * 100}%` }}
                 ></div>
               </div>
