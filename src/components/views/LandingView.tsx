@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
   ArrowRight, 
-  ShieldCheck, 
   Play,
   Sparkles
 } from 'lucide-react';
@@ -31,22 +30,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
           {/* Left Column: Mission Overview */}
           <div className="lg:col-span-7 space-y-6 gov-card p-6 sm:p-10 rounded-2xl border border-white/20 backdrop-blur-2xl shadow-2xl">
             
-            {/* Status Badges */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-mono font-semibold">
-                <img src="/logo.png" alt="ISRO Crest" className="w-4 h-4 object-contain rounded-full bg-white p-0.5" />
-                <span>CHANDRAYAAN PAYLOAD ENGINE</span>
-              </div>
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-earth-600/20 border border-earth-400/40 text-earth-300 text-xs font-mono">
-                <ShieldCheck className="w-3.5 h-3.5 text-earth-300" />
-                <span>SUB-PIXEL CORE</span>
-              </div>
-              <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>SYSTEM ONLINE</span>
-              </div>
-            </div>
-
             {/* Title & Subtitle */}
             <div className="space-y-2">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.1]">
@@ -111,27 +94,15 @@ export const LandingView: React.FC<LandingViewProps> = ({
             </div>
           </div>
 
-          {/* Right Column: High-Resolution Lunar Orbital Surface Imagery with Mission Control HUD */}
+          {/* Right Column: High-Resolution Lunar Orbital Surface Imagery */}
           <div className="lg:col-span-5 flex justify-center items-center">
-            <div className="relative w-full max-w-lg aspect-[4/5] rounded-2xl overflow-hidden bg-black border-2 border-white/25 shadow-2xl group">
+            <div className="relative w-full max-w-lg aspect-[4/5] rounded-2xl overflow-hidden bg-black group">
               {/* Lunar Orbital Surface Image */}
               <img
                 src="/lunar_clavius_reference.png"
                 alt="Lunar Orbital Surface Imagery"
-                className="w-full h-full object-cover object-center filter contrast-115 brightness-95 group-hover:scale-[1.03] transition-transform duration-700 ease-out"
+                className="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-700 ease-out"
               />
-
-              {/* Detector Scanlines Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/80 pointer-events-none"></div>
-              <div 
-                className="absolute inset-0 pointer-events-none opacity-25"
-                style={{
-                  backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0px, rgba(255,255,255,0.05) 1px, transparent 1px, transparent 3px)'
-                }}
-              ></div>
-
-              {/* Optical Radar Sweep Beam */}
-              <div className="absolute inset-x-0 h-32 bg-gradient-to-b from-transparent via-white/15 to-transparent pointer-events-none animate-scan-beam"></div>
 
               {/* Keypoint Correspondence Locks */}
               <div className="absolute top-[48%] left-[45%] -translate-x-1/2 -translate-y-1/2 pointer-events-none">
@@ -159,25 +130,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 <span className="absolute right-7 top-1/2 -translate-y-1/2 text-[9px] font-mono text-regolith-200 bg-black/85 px-2 py-0.5 rounded border border-white/20 whitespace-nowrap">
                   SOUTH RIM EJECTA
                 </span>
-              </div>
-
-              {/* Precision Reticle HUD with Corner Brackets */}
-              <div className="absolute inset-4 border border-white/20 pointer-events-none">
-                <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-white"></div>
-                <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-white"></div>
-                <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-white"></div>
-                <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-white"></div>
-
-                <div className="absolute top-1/2 left-0 w-3 border-t border-white/60"></div>
-                <div className="absolute top-1/2 right-0 w-3 border-t border-white/60"></div>
-                <div className="absolute top-0 left-1/2 h-3 border-l border-white/60"></div>
-                <div className="absolute bottom-0 left-1/2 h-3 border-l border-white/60"></div>
-
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-16 h-16 border border-white/30 rounded-full flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-                  </div>
-                </div>
               </div>
 
               {/* Top Sensor Badge */}
@@ -209,18 +161,25 @@ export const LandingView: React.FC<LandingViewProps> = ({
           SECTION 2: CURATED LUNAR VALIDATION BASINS & GROUND TRUTH BENCHMARKS
          ========================================================================= */}
       <section className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 border-b border-white/15 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 p-5 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
           <div>
-            <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold">
+            <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold mb-1">
               VERIFIED GROUND TRUTH BENCHMARKS
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
               Planetary Calibration Basins & Presets
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-regolith-300 font-mono">
-            Directly preload verified orbital telemetry, phase angles & sensor pairs
-          </p>
+          <button
+            onClick={() => {
+              if (presets.length > 0) onSelectPreset(presets[0]);
+            }}
+            className="group inline-flex items-center space-x-2 px-3.5 py-2 rounded-lg bg-obsidian-900/90 hover:bg-white/10 border border-white/20 hover:border-white/40 text-xs text-regolith-200 hover:text-white font-mono shadow-sm cursor-pointer transition-all duration-150 active:scale-[0.98]"
+            title="Preload calibrated Clavius Crater test scenario"
+          >
+            <span>Directly preload verified orbital telemetry & sensor pairs</span>
+            <ArrowRight className="w-3.5 h-3.5 text-regolith-400 group-hover:text-white group-hover:translate-x-0.5 transition-transform" />
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -290,14 +249,14 @@ export const LandingView: React.FC<LandingViewProps> = ({
           SECTION 3: 5-STAGE REGISTRATION PIPELINE ARCHITECTURE
          ========================================================================= */}
       <section className="space-y-6" id="architecture">
-        <div className="border-b border-white/15 pb-4">
-          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold">
+        <div className="p-5 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
+          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold mb-1">
             PIPELINE ARCHITECTURE
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
             The 5-Stage Coregistration Pipeline
           </h2>
-          <p className="text-sm text-regolith-300 mt-1 max-w-3xl">
+          <p className="text-sm text-regolith-200 mt-1 max-w-3xl leading-relaxed">
             Mathematical formulation designed to handle illumination differences, terrain relief, and feature distribution across lunar crater terrain.
           </p>
         </div>
@@ -486,14 +445,14 @@ export const LandingView: React.FC<LandingViewProps> = ({
           SECTION 4: COMPARATIVE BENCHMARK MATRIX
          ========================================================================= */}
       <section className="space-y-6">
-        <div className="border-b border-white/15 pb-4">
-          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold">
+        <div className="p-5 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
+          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold mb-1">
             VALIDATION BENCHMARKS
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
             Algorithm Performance Comparison
           </h2>
-          <p className="text-sm text-regolith-300 mt-1 max-w-3xl">
+          <p className="text-sm text-regolith-200 mt-1 max-w-3xl leading-relaxed">
             Empirical evaluation across paired lunar orbital frames with opposing solar illumination and variable crater geometries.
           </p>
         </div>
@@ -596,14 +555,14 @@ export const LandingView: React.FC<LandingViewProps> = ({
           SECTION 5: ISRO CHANDRAYAAN LUNAR ORBITER SENSOR PAYLOADS
          ========================================================================= */}
       <section className="space-y-6">
-        <div className="border-b border-white/15 pb-4">
-          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold">
+        <div className="p-5 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
+          <div className="text-earth-400 font-mono text-xs uppercase tracking-wider font-bold mb-1">
             SUPPORTED INSTRUMENTATION
           </div>
           <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
             Chandrayaan Sensor Payloads
           </h2>
-          <p className="text-sm text-regolith-300 mt-1 max-w-3xl">
+          <p className="text-sm text-regolith-200 mt-1 max-w-3xl leading-relaxed">
             Supported optical sensor configurations and resolution profiles across Chandrayaan lunar payloads.
           </p>
         </div>
