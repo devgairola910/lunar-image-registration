@@ -77,7 +77,7 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 right-6 z-50 p-3.5 rounded-xl bg-obsidian-900 border border-white/20 text-white font-mono text-xs shadow-2xl flex items-center space-x-2.5 animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 text-telemetry-green flex-shrink-0" />
+          <CheckCircle2 className="w-4 h-4 text-regolith-300 flex-shrink-0" />
           <span>{toastMessage}</span>
         </div>
       )}

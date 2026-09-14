@@ -105,7 +105,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                 <span className="text-[10px] px-2 py-0.5 rounded bg-black text-regolith-300 border border-white/10">
                   {run.id}
                 </span>
-                <span className="text-[10px] text-telemetry-green font-semibold tracking-wider">
+                <span className="text-[10px] text-regolith-300 font-semibold tracking-wider border border-white/10 px-1.5 py-0.5 rounded bg-white/5">
                   VERIFIED
                 </span>
               </div>
@@ -164,7 +164,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               <div className="grid grid-cols-3 gap-2 font-mono text-center pt-1">
                 <div className="p-2 rounded bg-obsidian-950 border border-white/5">
                   <div className="text-[9px] text-regolith-500">RMSE</div>
-                  <div className="text-sm font-bold text-telemetry-green mt-0.5">
+                  <div className="text-sm font-bold text-white mt-0.5">
                     {run.metrics.rmseTotal} px
                   </div>
                 </div>

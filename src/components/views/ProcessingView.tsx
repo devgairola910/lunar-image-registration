@@ -8,7 +8,8 @@ import {
   FastForward, 
   SunMedium, 
   Maximize2, 
-  Target 
+  Target,
+  ArrowRight
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
 import type { PipelineStageInfo, RegistrationMetrics, ImageMetadata } from '../../types/registration';
@@ -17,7 +18,11 @@ interface ProcessingViewProps {
   sourceMeta: ImageMetadata;
   referenceMeta: ImageMetadata;
   onComplete: () => void;
+  onResultsReady?: () => void;
   metrics: RegistrationMetrics;
+  taskRunId?: string;
+  isAlreadyCompleted?: boolean;
+  onMarkCompleted?: () => void;
 }
 
 const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
@@ -88,36 +93,91 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
   }
 ];
 
+const getCompletedLogs = () => {
+  const list: string[] = [];
+  STAGES.forEach((stage, idx) => {
+    stage.telemetryLogs.forEach(log => {
+      list.push(`[T+${(idx * 1.4 + 0.25).toFixed(2)}s] [${stage.name.split(' ')[0].toUpperCase()}] ${log}`);
+    });
+  });
+  list.push(`[T+7.20s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`);
+  list.push(`[T+7.22s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`);
+  return list;
+};
+
 export const ProcessingView: React.FC<ProcessingViewProps> = ({
   sourceMeta,
   referenceMeta,
   onComplete,
+  onResultsReady,
+  metrics,
+  taskRunId,
+  isAlreadyCompleted = false,
+  onMarkCompleted
 }) => {
-  const [currentStageIdx, setCurrentStageIdx] = useState(0);
-  const [stageProgress, setStageProgress] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
-  const terminalBottomRef = useRef<HTMLDivElement>(null);
+  const [currentStageIdx, setCurrentStageIdx] = useState(() => isAlreadyCompleted ? STAGES.length : 0);
+  const [stageProgress, setStageProgress] = useState(() => isAlreadyCompleted ? 100 : 0);
+  const [isFinished, setIsFinished] = useState(() => isAlreadyCompleted ? true : false);
+  const [logs, setLogs] = useState<string[]>(() => isAlreadyCompleted ? getCompletedLogs() : []);
+  const terminalContainerRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(0);
+  const executedTasksRef = useRef<Set<string>>(new Set(isAlreadyCompleted ? [taskRunId || 'INIT'] : []));
+  const onResultsReadyRef = useRef(onResultsReady);
+  const onMarkCompletedRef = useRef(onMarkCompleted);
 
   useEffect(() => {
-    startTimeRef.current = Date.now();
-  }, []);
+    onResultsReadyRef.current = onResultsReady;
+  }, [onResultsReady]);
 
-  // Auto-scroll terminal logs
   useEffect(() => {
-    terminalBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    onMarkCompletedRef.current = onMarkCompleted;
+  }, [onMarkCompleted]);
+
+  // Auto-scroll terminal container internally without scrolling the main window
+  useEffect(() => {
+    if (terminalContainerRef.current) {
+      terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
+    }
   }, [logs]);
 
-  // Main Pipeline Step Execution Engine
+  // Main Pipeline Step Execution Engine - Runs once per unique taskRunId
   useEffect(() => {
+    const currentTaskId = taskRunId || 'DEFAULT_TASK';
+
+    // If already marked as completed or already animated in this session, do not repeat!
+    if (isAlreadyCompleted || executedTasksRef.current.has(currentTaskId)) {
+      setIsFinished(true);
+      setCurrentStageIdx(STAGES.length);
+      setStageProgress(100);
+      if (logs.length === 0) {
+        setLogs(getCompletedLogs());
+      }
+      return;
+    }
+
+    executedTasksRef.current.add(currentTaskId);
+    startTimeRef.current = Date.now();
+    setCurrentStageIdx(0);
+    setStageProgress(0);
+    setIsFinished(false);
+    setLogs([]);
+
     let timer: ReturnType<typeof setTimeout>;
     let progressInterval: ReturnType<typeof setInterval>;
 
     const runStage = (stageIdx: number) => {
       if (stageIdx >= STAGES.length) {
-        setTimeout(() => {
-          onComplete();
-        }, 600);
+        setIsFinished(true);
+        setCurrentStageIdx(STAGES.length);
+        setStageProgress(100);
+        onResultsReadyRef.current?.();
+        onMarkCompletedRef.current?.();
+        const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+        setLogs(prev => [
+          ...prev,
+          `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
+          `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
+        ]);
         return;
       }
 
@@ -156,9 +216,11 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       clearTimeout(timer);
       clearInterval(progressInterval);
     };
-  }, [onComplete]);
+  }, [taskRunId, isAlreadyCompleted]);
 
   const handleSkip = () => {
+    onResultsReadyRef.current?.();
+    onMarkCompletedRef.current?.();
     onComplete();
   };
 
@@ -179,42 +241,75 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
         <div>
           <div className="flex items-center space-x-2 text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
-            <span>Active Pipeline Execution // Real-Time Telemetry</span>
+            {isFinished ? (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-telemetry-green" />
+                <span className="text-telemetry-green font-bold">All 5 Pipeline Stages Completed // Systems Nominal</span>
+              </>
+            ) : (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                <span>Active Pipeline Execution // Real-Time Telemetry</span>
+              </>
+            )}
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
-            Processing Lunar Pipeline
+            {isFinished ? 'Lunar Pipeline Execution Complete' : 'Processing Lunar Pipeline'}
           </h2>
           <p className="text-xs font-mono text-regolith-400">
             {sourceMeta.sensorType} ({sourceMeta.resolution}m) ➔ {referenceMeta.sensorType} ({referenceMeta.resolution}m)
           </p>
         </div>
 
-        {/* Action button: Skip to results */}
-        <button
-          onClick={handleSkip}
-          className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-obsidian-850 hover:bg-obsidian-750 border border-white/15 text-xs font-mono text-regolith-300 hover:text-white transition-all self-start sm:self-auto cursor-pointer"
-        >
-          <FastForward className="w-3.5 h-3.5 text-regolith-200" />
-          <span>Fast-Forward to Results</span>
-        </button>
+        {/* Action button: When finished, shows prominent "View Results Telemetry". If running, shows "Fast-Forward" */}
+        {isFinished ? (
+          <button
+            onClick={onComplete}
+            className="inline-flex items-center space-x-2.5 px-6 py-3 rounded-xl bg-white hover:bg-regolith-200 text-black font-mono text-xs font-extrabold tracking-wide uppercase transition-all self-start sm:self-auto cursor-pointer shadow-xl hover:scale-105"
+          >
+            <span>View Results Telemetry</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        ) : (
+          <button
+            onClick={handleSkip}
+            className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-obsidian-850 hover:bg-obsidian-750 border border-white/15 text-xs font-mono text-regolith-300 hover:text-white transition-all self-start sm:self-auto cursor-pointer"
+          >
+            <FastForward className="w-3.5 h-3.5 text-regolith-200" />
+            <span>Fast-Forward to Results</span>
+          </button>
+        )}
       </div>
 
       {/* Global Progress Bar */}
       <div className="p-4 rounded-xl mission-card border border-white/10 space-y-2">
         <div className="flex justify-between items-center text-xs font-mono">
           <span className="text-regolith-300">
-            STAGE {Math.min(STAGES.length, currentStageIdx + 1)} OF {STAGES.length}:{' '}
-            <strong className="text-white">
-              {STAGES[Math.min(STAGES.length - 1, currentStageIdx)].name}
-            </strong>
+            {isFinished ? (
+              <span className="text-telemetry-green font-bold">
+                ALL 5 STAGES COMPLETED &amp; CERTIFIED (IAU 2015 FRAME LOCKED)
+              </span>
+            ) : (
+              <>
+                STAGE {Math.min(STAGES.length, currentStageIdx + 1)} OF {STAGES.length}:{' '}
+                <strong className="text-white">
+                  {STAGES[Math.min(STAGES.length - 1, currentStageIdx)].name}
+                </strong>
+              </>
+            )}
           </span>
-          <span className="text-white font-bold">{overallProgress}%</span>
+          <span className={`font-bold ${isFinished ? 'text-telemetry-green' : 'text-white'}`}>
+            {isFinished ? '100%' : `${overallProgress}%`}
+          </span>
         </div>
         <div className="w-full bg-obsidian-950 h-1.5 rounded-full overflow-hidden border border-white/5">
           <div
-            className="bg-white h-full transition-all duration-150"
-            style={{ width: `${overallProgress}%` }}
+            className={`h-full transition-all duration-150 ${
+              isFinished
+                ? 'bg-telemetry-green shadow-[0_0_12px_rgba(34,197,94,0.5)]'
+                : 'bg-gradient-to-r from-earth-400 via-white to-telemetry-green'
+            }`}
+            style={{ width: isFinished ? '100%' : `${overallProgress}%` }}
           ></div>
         </div>
       </div>
@@ -232,22 +327,22 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                 isActive
                   ? 'mission-card-glow border-white/40 shadow-instrument'
                   : isCompleted
-                  ? 'bg-obsidian-900 border-white/20 text-regolith-200'
+                  ? 'bg-obsidian-900 border-telemetry-green/30 text-regolith-200'
                   : 'bg-obsidian-950 border-white/5 text-regolith-600 opacity-50'
               }`}
             >
               <div className="space-y-2">
                 {/* Node Status Indicator */}
                 <div className="flex items-center justify-between font-mono text-xs">
-                  <span className="font-bold opacity-60">0{idx + 1}</span>
+                  <span className="text-[10px] text-regolith-400 font-semibold uppercase tracking-wider">PHASE</span>
                   {isCompleted ? (
-                    <div className="flex items-center space-x-1 text-telemetry-green">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    <div className="flex items-center space-x-1 text-telemetry-green font-semibold">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-telemetry-green" />
                       <span className="text-[10px]">DONE</span>
                     </div>
                   ) : isActive ? (
                     <div className="flex items-center space-x-1 text-white font-bold">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <Loader2 className="w-3.5 h-3.5 animate-spin text-telemetry-green" />
                       <span className="text-[10px]">{stageProgress}%</span>
                     </div>
                   ) : (
@@ -262,7 +357,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                       isActive
                         ? 'bg-white/10 text-white'
                         : isCompleted
-                        ? 'bg-white/5 text-regolith-200'
+                        ? 'bg-telemetry-green/10 text-telemetry-green'
                         : 'bg-obsidian-900 text-regolith-600'
                     }`}
                   >
@@ -270,7 +365,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                   </div>
                   <h4
                     className={`text-xs font-bold font-display leading-tight ${
-                      isActive ? 'text-white' : isCompleted ? 'text-regolith-200' : 'text-regolith-500'
+                      isActive ? 'text-white' : isCompleted ? 'text-regolith-100' : 'text-regolith-500'
                     }`}
                   >
                     {stage.name}
@@ -288,9 +383,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                   <div
                     className={`h-full transition-all duration-75 ${
                       isCompleted
-                        ? 'bg-telemetry-green w-full'
+                        ? 'bg-telemetry-green w-full shadow-[0_0_8px_rgba(34,197,94,0.4)]'
                         : isActive
-                        ? 'bg-white'
+                        ? 'bg-telemetry-green'
                         : 'w-0'
                     }`}
                     style={{ width: isActive ? `${stageProgress}%` : undefined }}
@@ -301,6 +396,33 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
           );
         })}
       </div>
+
+      {/* Completion Banner */}
+      {isFinished && (
+        <div className="p-5 rounded-2xl bg-obsidian-850/95 border border-telemetry-green/40 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn shadow-2xl">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-xl bg-telemetry-green/10 border border-telemetry-green/30 flex items-center justify-center text-telemetry-green flex-shrink-0">
+              <CheckCircle2 className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="text-white font-bold text-base font-display">
+                All 5 Pipeline Stages Successfully Completed &amp; Certified
+              </div>
+              <div className="text-xs font-mono text-regolith-300 mt-0.5">
+                RMSE: <strong className="text-telemetry-green">{metrics.rmseTotal.toFixed(3)} px</strong> • Inlier Ratio: <strong className="text-telemetry-green">{metrics.inlierRatio > 1 ? metrics.inlierRatio.toFixed(1) : (metrics.inlierRatio * 100).toFixed(1)}%</strong> • Parabolic Sub-Pixel Covariance Converged
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onComplete}
+            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-regolith-200 text-black font-extrabold font-mono text-xs tracking-wider uppercase transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-2xl hover:scale-105"
+          >
+            <span>View Results Telemetry</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Real-time Streaming Terminal Console */}
       <ReticleFrame
@@ -315,7 +437,10 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
           </div>
         }
       >
-        <div className="rounded-lg bg-black p-4 border border-white/10 h-64 overflow-y-auto space-y-1.5 text-xs text-regolith-300 font-mono scrollbar-thin">
+        <div 
+          ref={terminalContainerRef}
+          className="rounded-lg bg-black p-4 border border-white/10 h-64 overflow-y-auto space-y-1.5 text-xs text-regolith-300 font-mono scrollbar-thin"
+        >
           <div className="text-regolith-600 text-[10px] pb-1 border-b border-white/5 flex items-center justify-between">
             <span>--- START OF TELEMETRY STREAM // CHANDRADRISHTI ORBITAL NODE ---</span>
             <span>IAU 2015 FRAME</span>
@@ -325,8 +450,8 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
             <div
               key={i}
               className={`leading-relaxed animate-fadeIn ${
-                log.includes('complete') || log.includes('verified') || log.includes('converged')
-                  ? 'text-white font-semibold'
+                log.includes('complete') || log.includes('COMPLETED') || log.includes('verified') || log.includes('converged') || log.includes('locked')
+                  ? 'text-telemetry-green font-semibold'
                   : 'text-regolith-300'
               }`}
             >
@@ -334,8 +459,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
               {log}
             </div>
           ))}
-
-          <div ref={terminalBottomRef} />
         </div>
       </ReticleFrame>
     </div>

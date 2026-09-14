@@ -143,7 +143,11 @@ export const ViewerControls: React.FC<ViewerControlsProps> = ({
                   onClick={() => onChangeKeypointFilter(filter)}
                   className={`px-1.5 py-0.5 rounded uppercase cursor-pointer ${
                     keypointFilter === filter
-                      ? 'bg-white/15 text-white font-bold'
+                      ? filter === 'inliers'
+                        ? 'bg-emerald-500/20 text-emerald-400 font-bold'
+                        : filter === 'outliers'
+                        ? 'bg-rose-500/20 text-rose-400 font-bold'
+                        : 'bg-white/15 text-white font-bold'
                       : 'text-regolith-500 hover:text-regolith-300'
                   }`}
                 >

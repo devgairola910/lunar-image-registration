@@ -296,7 +296,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
             ctx.fillStyle = `rgba(34, 197, 94, ${alpha})`;
             ctx.fillRect(imgX + cell.col * cellW, imgY + cell.row * cellH, cellW, cellH);
 
-            ctx.strokeStyle = 'rgba(34, 197, 94, 0.3)';
+            ctx.strokeStyle = 'rgba(34, 197, 94, 0.4)';
             ctx.strokeRect(imgX + cell.col * cellW, imgY + cell.row * cellH, cellW, cellH);
           }
         });
@@ -314,7 +314,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
         const rx = imgX + (kp.refX / 600) * imgW;
         const ry = imgY + (kp.refY / 600) * imgH;
 
-        ctx.strokeStyle = kp.isInlier ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.6)';
+        ctx.strokeStyle = kp.isInlier ? 'rgba(34, 197, 94, 0.85)' : 'rgba(244, 63, 94, 0.65)';
         ctx.lineWidth = kp.isInlier ? 1.2 : 0.8;
         ctx.beginPath();
         ctx.moveTo(sx, sy);
@@ -336,15 +336,18 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
         const isHovered = hoveredKeypoint?.id === kp.id;
 
         if (kp.isInlier) {
-          // Inlier: Clean Emerald / White Point
-          ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#60a5fa' : '#22c55e';
+          // Inlier: Crisp Photogrammetric Tie-Point Fiducial (Green with subtle dark hairline border)
+          ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#86efac' : '#22c55e';
           ctx.beginPath();
           ctx.arc(px, py, isSelected ? 3.5 : 2, 0, Math.PI * 2);
           ctx.fill();
+          ctx.strokeStyle = '#060608';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
 
           // Reticle ring if selected or hovered
           if (isSelected || isHovered) {
-            ctx.strokeStyle = isSelected ? '#ffffff' : '#60a5fa';
+            ctx.strokeStyle = isSelected ? '#ffffff' : '#22c55e';
             ctx.lineWidth = 1.2;
             ctx.beginPath();
             ctx.arc(px, py, 8, 0, Math.PI * 2);
@@ -358,8 +361,8 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
             ctx.stroke();
           }
         } else {
-          // Outlier: Subtle red circle
-          ctx.strokeStyle = isSelected ? '#ffffff' : '#ef4444';
+          // Outlier: Subtle rose/red circle
+          ctx.strokeStyle = isSelected ? '#ffffff' : '#fb7185';
           ctx.lineWidth = 1;
           ctx.beginPath();
           ctx.arc(px, py, isSelected ? 3.5 : 2, 0, Math.PI * 2);
@@ -541,7 +544,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
             <span
               className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
                 hoveredKeypoint.isInlier
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
                   : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
               }`}
             >
@@ -556,7 +559,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
             <span className="text-regolith-400">Residual:</span>
             <span className="text-white font-bold">{hoveredKeypoint.residualError} px</span>
             <span className="text-regolith-400">Confidence:</span>
-            <span className="text-emerald-400 font-bold">{(hoveredKeypoint.confidence * 100).toFixed(1)}%</span>
+            <span className="text-white font-bold">{(hoveredKeypoint.confidence * 100).toFixed(1)}%</span>
           </div>
         </div>
       )}
