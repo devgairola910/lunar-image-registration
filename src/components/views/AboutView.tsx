@@ -31,10 +31,12 @@ export const AboutView: React.FC<AboutViewProps> = ({
         <div className="gov-card p-4 sm:p-8 lg:p-10 rounded-2xl border border-white/20 backdrop-blur-2xl shadow-2xl space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4">
-              <div className="flex items-center space-x-2.5 p-2 rounded-xl bg-white/95 border-2 border-white/30 shadow-lg flex-shrink-0">
-                <img src="/emblem-transparent.png" alt="State Emblem of India" className="h-7 sm:h-8 w-auto object-contain select-none" />
-                <span className="w-px h-6 bg-slate-300"></span>
-                <img src="/logo.png" alt="ISRO ChandraDrishti Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain select-none" />
+              <div className="relative flex items-center justify-center w-11 h-11 sm:w-14 sm:h-14 rounded-xl bg-white/95 border-2 border-white/30 p-1.5 shadow-xl overflow-hidden flex-shrink-0">
+                <img 
+                  src="/logo.png" 
+                  alt="ChandraDrishti Logo" 
+                  className="w-full h-full object-contain select-none"
+                />
               </div>
               <div>
                 <span className="text-[10px] sm:text-xs font-mono font-bold text-earth-400 uppercase tracking-widest block leading-tight">
