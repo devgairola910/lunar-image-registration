@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* View Navigation Pills */}
-        <nav className="flex items-center p-1 rounded-xl bg-obsidian-850 border border-white/15 shadow-inner overflow-x-auto">
+        <nav className="flex items-center p-1 rounded-xl bg-obsidian-850 border border-white/15 shadow-inner overflow-x-auto max-w-full w-full lg:w-auto space-x-1 no-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
                 key={item.id}
                 disabled={item.disabled}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center space-x-2.5 px-4 py-2 rounded-lg text-xs font-mono transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-mono transition-all duration-150 whitespace-nowrap cursor-pointer ${
                   isActive
                     ? 'bg-regolith-800 text-white border border-white/30 shadow-md font-bold'
                     : item.disabled
@@ -124,8 +124,8 @@ export const Header: React.FC<HeaderProps> = ({
                     : 'text-regolith-300 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-regolith-400'}`} />
-                <span className="text-xs">{item.label}</span>
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isActive ? 'text-white' : 'text-regolith-400'}`} />
+                <span>{item.label}</span>
               </button>
             );
           })}
@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-80 p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 shadow-2xl z-50">
+            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 shadow-2xl z-50">
               <div className="text-[10px] font-mono text-regolith-300 px-2 py-1.5 uppercase tracking-wider border-b border-white/10 mb-1.5 flex items-center justify-between">
                 <span>Verified Orbital Baselines</span>
                 <span className="text-earth-400 font-semibold">3 PRESETS</span>

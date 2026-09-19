@@ -33,64 +33,64 @@ export const LandingView: React.FC<LandingViewProps> = ({
             
             {/* Status Badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-xs font-mono font-semibold">
-                <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-95" />
+              <div className="inline-flex items-center space-x-2 px-2.5 sm:px-3 py-1 rounded-md bg-white/10 border border-white/20 text-white text-[10px] sm:text-xs font-mono font-semibold">
+                <img src="/emblem-white.png" alt="State Emblem of India" className="h-3.5 sm:h-4 w-auto object-contain opacity-95 select-none" />
                 <span className="text-white/25">|</span>
-                <img src="/logo.png" alt="ISRO Crest" className="w-4 h-4 object-contain rounded-full bg-white p-0.5" />
+                <img src="/logo.png" alt="ISRO Crest" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain rounded-full bg-white p-0.5 select-none" />
                 <span>CHANDRAYAAN PAYLOAD ENGINE</span>
               </div>
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-md bg-earth-600/20 border border-earth-400/40 text-earth-300 text-xs font-mono">
-                <ShieldCheck className="w-3.5 h-3.5 text-earth-300" />
+              <div className="inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1 rounded-md bg-earth-600/20 border border-earth-400/40 text-earth-300 text-[10px] sm:text-xs font-mono">
+                <ShieldCheck className="w-3.5 h-3.5 text-earth-300 flex-shrink-0" />
                 <span>SUB-PIXEL CORE</span>
               </div>
             </div>
             {/* Title & Subtitle */}
             <div className="space-y-2">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.1]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white font-display leading-[1.1]">
                 ChandraDrishti
               </h1>
-              <p className="text-lg sm:text-xl font-semibold text-earth-400 font-display">
+              <p className="text-base sm:text-xl font-semibold text-earth-400 font-display">
                 Autonomous Lunar Photogrammetry & Sub-Pixel Coregistration Engine
               </p>
             </div>
 
             {/* Clean, Concise Tagline */}
-            <p className="text-sm sm:text-base text-regolith-300 leading-relaxed font-sans">
+            <p className="text-xs sm:text-base text-regolith-300 leading-relaxed font-sans">
               High-precision sub-pixel registration and co-alignment for lunar orbital imagery across extreme solar illumination angles, diverse sensor resolutions, and dynamic crater shadows.
             </p>
 
             {/* Authoritative Operational Telemetry Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 font-mono">
-              <div className="p-3 rounded-xl bg-black/60 border border-white/15">
-                <div className="text-[10px] text-regolith-400 uppercase tracking-wider">REGISTRATION RMSE</div>
-                <div className="text-lg sm:text-xl font-bold text-white">&lt; 0.80 px</div>
-                <div className="text-[10px] text-regolith-400">Sub-pixel precision</div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 pt-2 font-mono">
+              <div className="p-2.5 sm:p-3 rounded-xl bg-black/60 border border-white/15">
+                <div className="text-[9px] sm:text-[10px] text-regolith-400 uppercase tracking-wider">REGISTRATION RMSE</div>
+                <div className="text-base sm:text-xl font-bold text-white">&lt; 0.80 px</div>
+                <div className="text-[9px] sm:text-[10px] text-regolith-400">Sub-pixel precision</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-black/60 border border-white/15">
-                <div className="text-[10px] text-regolith-400 uppercase tracking-wider">MAX OPTICAL GSD</div>
-                <div className="text-lg sm:text-xl font-bold text-white">0.25 m/px</div>
-                <div className="text-[10px] text-regolith-400">CH-2 OHRC resolving</div>
+              <div className="p-2.5 sm:p-3 rounded-xl bg-black/60 border border-white/15">
+                <div className="text-[9px] sm:text-[10px] text-regolith-400 uppercase tracking-wider">MAX OPTICAL GSD</div>
+                <div className="text-base sm:text-xl font-bold text-white">0.25 m/px</div>
+                <div className="text-[9px] sm:text-[10px] text-regolith-400">CH-2 OHRC resolving</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-black/60 border border-white/15">
-                <div className="text-[10px] text-regolith-400 uppercase tracking-wider">SCALE DIVERGENCE</div>
-                <div className="text-lg sm:text-xl font-bold text-earth-300">Up to 20:1</div>
-                <div className="text-[10px] text-regolith-400">Cross-sensor scale ratio</div>
+              <div className="p-2.5 sm:p-3 rounded-xl bg-black/60 border border-white/15">
+                <div className="text-[9px] sm:text-[10px] text-regolith-400 uppercase tracking-wider">SCALE DIVERGENCE</div>
+                <div className="text-base sm:text-xl font-bold text-earth-300">Up to 20:1</div>
+                <div className="text-[9px] sm:text-[10px] text-regolith-400">Cross-sensor ratio</div>
               </div>
 
-              <div className="p-3 rounded-xl bg-black/60 border border-white/15">
-                <div className="text-[10px] text-regolith-400 uppercase tracking-wider">GEODETIC DATUM</div>
-                <div className="text-lg sm:text-xl font-bold text-white">IAU 2015</div>
-                <div className="text-[10px] text-regolith-400">Mean Earth / Polar Axis</div>
+              <div className="p-2.5 sm:p-3 rounded-xl bg-black/60 border border-white/15">
+                <div className="text-[9px] sm:text-[10px] text-regolith-400 uppercase tracking-wider">GEODETIC DATUM</div>
+                <div className="text-base sm:text-xl font-bold text-white">IAU 2015</div>
+                <div className="text-[9px] sm:text-[10px] text-regolith-400">Mean Earth / Polar</div>
               </div>
             </div>
 
             {/* Action Callouts */}
-            <div className="flex flex-wrap items-center gap-4 pt-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-3">
               <button
                 onClick={onStartRegistration}
-                className="group relative inline-flex items-center justify-center space-x-3 px-8 py-4 rounded-xl bg-white hover:bg-regolith-100 text-black font-bold text-sm tracking-wide transition-all duration-200 shadow-2xl hover:scale-[1.02] cursor-pointer"
+                className="group relative inline-flex items-center justify-center space-x-3 px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-white hover:bg-regolith-100 text-black font-bold text-xs sm:text-sm tracking-wide transition-all duration-200 shadow-2xl hover:scale-[1.02] cursor-pointer"
               >
                 <span>Launch Registration Pipeline</span>
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
@@ -100,7 +100,7 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 onClick={() => {
                   if (presets.length > 0) onSelectPreset(presets[0]);
                 }}
-                className="inline-flex items-center space-x-2.5 px-6 py-4 rounded-xl bg-obsidian-900 hover:bg-obsidian-850 border border-white/25 hover:border-white/50 text-white font-mono text-xs font-semibold transition-all duration-150 cursor-pointer shadow-lg"
+                className="inline-flex items-center justify-center space-x-2.5 px-5 sm:px-6 py-3.5 sm:py-4 rounded-xl bg-obsidian-900 hover:bg-obsidian-850 border border-white/25 hover:border-white/50 text-white font-mono text-xs font-semibold transition-all duration-150 cursor-pointer shadow-lg"
               >
                 <Play className="w-4 h-4 text-earth-400" />
                 <span>Explore Clavius Benchmark</span>

@@ -27,34 +27,34 @@ export const AboutView: React.FC<AboutViewProps> = ({
       {/* =========================================================================
           HERO & AGENCY BRIEFING
          ========================================================================= */}
-      <section className="relative pt-4 sm:pt-6">
-        <div className="gov-card p-6 sm:p-10 rounded-2xl border border-white/20 backdrop-blur-2xl shadow-2xl space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-6">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 p-2 rounded-xl bg-white/95 border-2 border-white/30 shadow-lg">
-                <img src="/emblem-transparent.png" alt="State Emblem of India" className="h-8 w-auto object-contain" />
+      <section className="relative pt-2 sm:pt-6">
+        <div className="gov-card p-4 sm:p-8 lg:p-10 rounded-2xl border border-white/20 backdrop-blur-2xl shadow-2xl space-y-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/10 pb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 sm:gap-4">
+              <div className="flex items-center space-x-2.5 p-2 rounded-xl bg-white/95 border-2 border-white/30 shadow-lg flex-shrink-0">
+                <img src="/emblem-transparent.png" alt="State Emblem of India" className="h-7 sm:h-8 w-auto object-contain select-none" />
                 <span className="w-px h-6 bg-slate-300"></span>
-                <img src="/logo.png" alt="ISRO ChandraDrishti Logo" className="w-8 h-8 object-contain" />
+                <img src="/logo.png" alt="ISRO ChandraDrishti Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain select-none" />
               </div>
               <div>
-                <span className="text-xs font-mono font-bold text-earth-400 uppercase tracking-widest block">
+                <span className="text-[10px] sm:text-xs font-mono font-bold text-earth-400 uppercase tracking-widest block leading-tight">
                   DEPARTMENT OF SPACE • GOVERNMENT OF INDIA
                 </span>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white font-display tracking-tight">
+                <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white font-display tracking-tight mt-0.5">
                   About ChandraDrishti
                 </h1>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-xs font-mono text-regolith-200">
-              <ShieldCheck className="w-4 h-4 text-earth-300" />
+            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/15 text-[10px] sm:text-xs font-mono text-regolith-200 self-start lg:self-center">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-earth-300 flex-shrink-0" />
               <span>ISRO SAC // PDS4 & IAU-2015 COMPLIANT</span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <div className="lg:col-span-8 space-y-4 text-sm text-regolith-200 leading-relaxed font-sans">
-              <p className="text-base text-white font-medium">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
+            <div className="lg:col-span-8 space-y-4 text-xs sm:text-sm text-regolith-200 leading-relaxed font-sans">
+              <p className="text-sm sm:text-base text-white font-medium">
                 <strong>ChandraDrishti</strong> is an autonomous multi-sensor lunar photogrammetry and image coregistration engine developed at the <strong>Space Applications Centre (SAC), ISRO</strong>.
               </p>
               <p>
@@ -65,8 +65,8 @@ export const AboutView: React.FC<AboutViewProps> = ({
               </p>
             </div>
 
-            <div className="lg:col-span-4 gov-card p-5 rounded-xl border border-white/15 space-y-3 font-mono text-xs">
-              <div className="text-earth-400 font-bold uppercase tracking-wider text-[11px]">
+            <div className="lg:col-span-4 gov-card p-4 sm:p-5 rounded-xl border border-white/15 space-y-3 font-mono text-xs flex flex-col justify-center">
+              <div className="text-earth-400 font-bold uppercase tracking-wider text-[10px] sm:text-[11px]">
                 INSTITUTIONAL DESK
               </div>
               <div className="space-y-2 text-regolith-300">
@@ -78,25 +78,25 @@ export const AboutView: React.FC<AboutViewProps> = ({
                   <MapPin className="w-4 h-4 text-regolith-400 flex-shrink-0 mt-0.5" />
                   <span>Ahmedabad, Gujarat – 380015, India</span>
                 </div>
-                <div className="flex items-center space-x-2 pt-1 border-t border-white/10 text-[11px] text-white">
-                  <Award className="w-3.5 h-3.5 text-earth-300" />
+                <div className="flex items-center space-x-2 pt-2 border-t border-white/10 text-[11px] text-white">
+                  <Award className="w-3.5 h-3.5 text-earth-300 flex-shrink-0" />
                   <span>Planetary Remote Sensing Division</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 pt-2 border-t border-white/10">
             <button
               onClick={onStartRegistration}
-              className="px-6 py-3.5 rounded-xl bg-white hover:bg-regolith-100 text-black font-bold text-xs tracking-wider uppercase transition-all shadow-xl flex items-center space-x-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white hover:bg-regolith-100 text-black font-bold text-xs tracking-wider uppercase transition-all shadow-xl flex items-center justify-center space-x-2 cursor-pointer"
             >
               <span>Launch Registration Engine</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             <button
               onClick={onNavigateHome}
-              className="px-6 py-3.5 rounded-xl bg-obsidian-900 hover:bg-obsidian-850 border border-white/20 text-white font-mono text-xs font-semibold transition-all flex items-center space-x-2 cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-obsidian-900 hover:bg-obsidian-850 border border-white/20 text-white font-mono text-xs font-semibold transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               <Play className="w-3.5 h-3.5 text-earth-400" />
               <span>Return to Mission Briefing</span>
@@ -160,7 +160,7 @@ export const AboutView: React.FC<AboutViewProps> = ({
           badge="PIPELINE SPECIFICATION"
           badgeColor="blue"
         >
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 font-mono text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4 font-mono text-xs">
             <div className="p-4 rounded-xl bg-black/60 border border-white/15 space-y-2">
               <div className="text-earth-400 font-bold text-[10px]">STAGE 1</div>
               <div className="text-white font-bold">Hapke Reflectance</div>
@@ -193,7 +193,7 @@ export const AboutView: React.FC<AboutViewProps> = ({
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-black/60 border border-white/15 space-y-2">
+            <div className="p-4 rounded-xl bg-black/60 border border-white/15 space-y-2 sm:col-span-2 lg:col-span-1">
               <div className="text-earth-400 font-bold text-[10px]">STAGE 5</div>
               <div className="text-white font-bold">Levenberg-Marquardt</div>
               <div className="text-regolith-400 text-[11px] leading-snug">
@@ -208,36 +208,36 @@ export const AboutView: React.FC<AboutViewProps> = ({
           SUPPORTED CHANDRAYAAN PAYLOADS
          ========================================================================= */}
       <section className="space-y-6">
-        <div className="p-5 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
+        <div className="p-4 sm:p-6 rounded-2xl gov-card border border-white/15 backdrop-blur-2xl shadow-xl">
           <span className="text-xs font-mono font-bold text-earth-400 uppercase tracking-widest block mb-1">
             SUPPORTED INSTRUMENTATION
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-white font-display">
+          <h2 className="text-xl sm:text-3xl font-extrabold text-white font-display">
             Calibrated Sensor Payload Profiles
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="gov-card p-6 rounded-2xl border border-white/15 space-y-4">
-            <div className="flex items-center justify-between">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="gov-card p-5 sm:p-6 rounded-2xl border border-white/15 space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-earth-400" />
-                <h3 className="text-lg font-bold text-white font-display">OHRC (Orbiter High Resolution Camera)</h3>
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-earth-400 flex-shrink-0" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-display">OHRC (Orbiter High Resolution Camera)</h3>
               </div>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-white border border-white/20">0.25 m/px</span>
+              <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-white border border-white/20 self-start sm:self-auto whitespace-nowrap">0.25 m/px</span>
             </div>
             <p className="text-xs text-regolith-300 leading-relaxed">
               Chandrayaan-2 panchromatic sensor providing sub-meter ground sample distance for crater rim mapping and boulder identification.
             </p>
           </div>
 
-          <div className="gov-card p-6 rounded-2xl border border-white/15 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="gov-card p-5 sm:p-6 rounded-2xl border border-white/15 space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div className="flex items-center space-x-2">
-                <CheckCircle2 className="w-5 h-5 text-earth-400" />
-                <h3 className="text-lg font-bold text-white font-display">TMC-2 (Terrain Mapping Camera-2)</h3>
+                <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-earth-400 flex-shrink-0" />
+                <h3 className="text-base sm:text-lg font-bold text-white font-display">TMC-2 (Terrain Mapping Camera-2)</h3>
               </div>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-white border border-white/20">5.0 m/px</span>
+              <span className="text-[10px] sm:text-xs font-mono px-2 py-0.5 rounded bg-white/10 text-white border border-white/20 self-start sm:self-auto whitespace-nowrap">5.0 m/px</span>
             </div>
             <p className="text-xs text-regolith-300 leading-relaxed">
               Tri-stereo optical payload generating regional 3D Digital Elevation Models and regional surface baselines.

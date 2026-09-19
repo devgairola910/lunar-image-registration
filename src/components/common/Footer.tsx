@@ -235,30 +235,30 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
             {/* Headquarters details */}
             <div className="md:col-span-7 space-y-2.5">
-              <div className="flex items-start space-x-3 text-[11px] text-regolith-300">
+              <div className="flex items-start space-x-2.5 sm:space-x-3 text-[11px] text-regolith-300">
                 <MapPin className="w-4 h-4 text-earth-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-0.5 leading-relaxed font-mono">
-                  <div className="text-white font-bold text-xs flex items-center space-x-2">
-                    <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-90 select-none inline" />
+                  <div className="text-white font-bold text-xs flex flex-wrap items-center gap-2">
+                    <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-90 select-none inline flex-shrink-0" />
                     <span>Space Applications Centre (SAC), Indian Space Research Organisation</span>
                   </div>
                   <div>Jodhpur Tekra, Ambawadi Vistar P.O.</div>
                   <div>Ahmedabad – 380015, Gujarat, India</div>
                 </div>
               </div>
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-regolith-400 pt-1">
+              <div className="flex flex-wrap items-center gap-y-1.5 gap-x-3 sm:gap-x-4 text-[10px] sm:text-[11px] text-regolith-400 pt-1">
                 <span className="flex items-center space-x-1.5">
-                  <Phone className="w-3.5 h-3.5 text-regolith-500" />
+                  <Phone className="w-3.5 h-3.5 text-regolith-500 flex-shrink-0" />
                   <span>+91 (079) 2691-3000 / 2691-3001</span>
                 </span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span className="flex items-center space-x-1.5">
-                  <Mail className="w-3.5 h-3.5 text-regolith-500" />
-                  <a href="mailto:support-chandradrishti@sac.isro.gov.in" className="text-earth-400 hover:underline">
+                  <Mail className="w-3.5 h-3.5 text-regolith-500 flex-shrink-0" />
+                  <a href="mailto:support-chandradrishti@sac.isro.gov.in" className="text-earth-400 hover:underline break-all sm:break-normal">
                     support-chandradrishti@sac.isro.gov.in
                   </a>
                 </span>
-                <span>•</span>
+                <span className="hidden sm:inline">•</span>
                 <span>ISSDC Operations: Byalalu Deep Space Network Complex, Bengaluru</span>
               </div>
             </div>
