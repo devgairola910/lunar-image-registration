@@ -43,10 +43,6 @@ export const LandingView: React.FC<LandingViewProps> = ({
                 <ShieldCheck className="w-3.5 h-3.5 text-earth-300" />
                 <span>SUB-PIXEL CORE</span>
               </div>
-              <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-regolith-300 text-xs font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>SYSTEM ONLINE</span>
-              </div>
             </div>
             {/* Title & Subtitle */}
             <div className="space-y-2">

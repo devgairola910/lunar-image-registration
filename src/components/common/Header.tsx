@@ -6,13 +6,14 @@ import {
   History, 
   Home,
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  Info
 } from 'lucide-react';
 import type { PresetScenario } from '../../types/registration';
 
 interface HeaderProps {
-  currentView: 'landing' | 'upload' | 'processing' | 'results' | 'history';
-  onNavigate: (view: 'landing' | 'upload' | 'processing' | 'results' | 'history') => void;
+  currentView: 'landing' | 'upload' | 'processing' | 'results' | 'history' | 'about';
+  onNavigate: (view: 'landing' | 'upload' | 'processing' | 'results' | 'history' | 'about') => void;
   onSelectPreset: (preset: PresetScenario) => void;
   presets: PresetScenario[];
   activePresetId?: string;
@@ -20,7 +21,7 @@ interface HeaderProps {
 }
 
 interface NavItem {
-  id: 'landing' | 'upload' | 'processing' | 'results' | 'history';
+  id: 'landing' | 'upload' | 'processing' | 'results' | 'history' | 'about';
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   disabled: boolean;
@@ -40,6 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
     { id: 'processing', label: 'Pipeline Engine', icon: Cpu, disabled: false },
     { id: 'results', label: 'Results Telemetry', icon: BarChart3, disabled: !hasResults },
     { id: 'history', label: 'Mission Archive', icon: History, disabled: false },
+    { id: 'about', label: 'About Mission', icon: Info, disabled: false },
   ];
 
   return (

@@ -9,13 +9,12 @@ import {
   ExternalLink,
   Globe,
   FileText,
-  Building,
   Info,
   X
 } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate?: (view: 'landing' | 'upload' | 'processing' | 'results' | 'history') => void;
+  onNavigate?: (view: 'landing' | 'upload' | 'processing' | 'results' | 'history' | 'about') => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
@@ -176,7 +175,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               <ul className="space-y-2 text-[11px] text-regolith-400">
                 <li>
                   <button 
-                    onClick={() => setActiveModal('about')}
+                    onClick={() => onNavigate ? onNavigate('about') : setActiveModal('about')}
                     className="text-earth-400 hover:text-earth-300 font-bold transition-colors cursor-pointer flex items-center space-x-1"
                   >
                     <span>About ChandraDrishti</span>
@@ -197,7 +196,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 <li><a href="https://www.prl.res.in" target="_blank" rel="noreferrer" className="hover:text-white transition-colors flex items-center space-x-1"><span>Physical Research Laboratory</span><ExternalLink className="w-2.5 h-2.5 text-regolith-600" /></a></li>
                 <li><a href="https://www.isro.gov.in/Careers.html" target="_blank" rel="noreferrer" className="hover:text-white transition-colors">ISRO Research Fellowships</a></li>
                 <li><a href="#architecture" className="hover:text-white transition-colors">Pipeline Architecture</a></li>
-                <li><span className="text-regolith-300 flex items-center space-x-1.5"><span className="w-1.5 h-1.5 rounded-full bg-regolith-400"></span><span>System Status: 99.98% Operational</span></span></li>
               </ul>
             </div>
 
@@ -237,22 +235,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-2">
             {/* Headquarters details */}
             <div className="md:col-span-7 space-y-2.5">
-              <div className="flex items-center space-x-2 text-white font-bold text-xs">
-                <img src="/emblem-white.png" alt="State Emblem of India" className="h-4.5 w-auto object-contain opacity-90 select-none" />
-                <Building className="w-4 h-4 text-earth-400" />
-                <span>Space Applications Centre (SAC), Indian Space Research Organisation</span>
+              <div className="flex items-start space-x-3 text-[11px] text-regolith-300">
+                <MapPin className="w-4 h-4 text-earth-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-0.5 leading-relaxed font-mono">
+                  <div className="text-white font-bold text-xs flex items-center space-x-2">
+                    <img src="/emblem-white.png" alt="State Emblem of India" className="h-4 w-auto object-contain opacity-90 select-none inline" />
+                    <span>Space Applications Centre (SAC), Indian Space Research Organisation</span>
+                  </div>
+                  <div>Jodhpur Tekra, Ambawadi Vistar P.O.</div>
+                  <div>Ahmedabad – 380015, Gujarat, India</div>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-regolith-400">
-                <span className="flex items-center space-x-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-regolith-500" />
-                  <span>Jodhpur Tekra, Ambawadi Vistar P.O., Ahmedabad – 380015, Gujarat, India</span>
-                </span>
+              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-regolith-400 pt-1">
                 <span className="flex items-center space-x-1.5">
                   <Phone className="w-3.5 h-3.5 text-regolith-500" />
                   <span>+91 (079) 2691-3000 / 2691-3001</span>
                 </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-regolith-400">
+                <span>•</span>
                 <span className="flex items-center space-x-1.5">
                   <Mail className="w-3.5 h-3.5 text-regolith-500" />
                   <a href="mailto:support-chandradrishti@sac.isro.gov.in" className="text-earth-400 hover:underline">
@@ -358,71 +357,8 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
       </footer>
 
       {/* =========================================================================
-          INTERACTIVE MODALS (ABOUT US, CONTACT US, TERMS, PRIVACY)
+          INTERACTIVE MODALS (CONTACT US, TERMS, PRIVACY)
          ========================================================================= */}
-
-      {/* ABOUT US MODAL */}
-      {activeModal === 'about' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fadeIn">
-          <div className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto gov-card p-6 sm:p-8 rounded-2xl border border-white/30 shadow-2xl space-y-6">
-            <div className="flex items-center justify-between border-b border-white/15 pb-4">
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-1.5 p-1 rounded-lg bg-white/95 border border-white/20">
-                  <img src="/emblem-transparent.png" alt="State Emblem of India" className="h-7 w-auto object-contain" />
-                  <img src="/logo.png" alt="ISRO Logo" className="w-7 h-7 object-contain" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white font-display">About ChandraDrishti</h3>
-                  <p className="text-xs text-regolith-400 font-mono">Planetary Remote Sensing Division, SAC ISRO</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs font-sans text-regolith-200 leading-relaxed">
-              <p>
-                <strong>ChandraDrishti</strong> is an autonomous multi-sensor lunar photogrammetry and image coregistration engine, engineered to align orbital imagery across varying illumination conditions and sensor resolutions.
-              </p>
-              
-              <h4 className="text-sm font-bold text-white font-display pt-2">Core Objective</h4>
-              <p>
-                Lunar surface imagery frequently exhibits significant variations in solar illumination angles and spatial resolutions. ChandraDrishti provides reliable sub-pixel coregistration across multi-sensor pairs, establishing precise geometric alignment for cartography, elevation modeling, and surface analysis.
-              </p>
-
-              <h4 className="text-sm font-bold text-white font-display pt-2">Key Highlights</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs pt-1">
-                <div className="p-3 rounded-lg bg-black/60 border border-white/15">
-                  <div className="text-white font-bold">Multi-Sensor Support</div>
-                  <div className="text-regolith-400 text-[11px]">Calibrated for OHRC (0.25m), TMC-2 (5m), and IIRS (80m) payloads.</div>
-                </div>
-                <div className="p-3 rounded-lg bg-black/60 border border-white/15">
-                  <div className="text-white font-bold">Sub-Pixel Accuracy</div>
-                  <div className="text-regolith-400 text-[11px]">Sub-pixel alignment with robust outlier rejection and tile-based spatial balancing.</div>
-                </div>
-              </div>
-
-              <h4 className="text-sm font-bold text-white font-display pt-2">Mission Application</h4>
-              <p>
-                The calibrated tie-points and orthorectified datasets produced by ChandraDrishti help identify safe landing sites, support terrain elevation mapping, and assist in correlation of multi-spectral lunar orbital imagery.
-              </p>
-            </div>
-
-            <div className="border-t border-white/15 pt-4 flex justify-end">
-              <button
-                onClick={() => setActiveModal(null)}
-                className="px-5 py-2.5 rounded-xl bg-white text-black font-bold font-mono text-xs cursor-pointer hover:bg-regolith-200 transition-colors"
-              >
-                Close Briefing
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* CONTACT US MODAL */}
       {activeModal === 'contact' && (

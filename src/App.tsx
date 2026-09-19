@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Background } from './components/common/Background';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
@@ -7,6 +7,7 @@ import { UploadView } from './components/views/UploadView';
 import { ProcessingView } from './components/views/ProcessingView';
 import { ResultsView } from './components/views/ResultsView';
 import { HistoryView } from './components/views/HistoryView';
+import { AboutView } from './components/views/AboutView';
 import { 
   getPresetScenarios, 
   generateKeypointDataset, 
@@ -22,7 +23,12 @@ import type {
 
 export function App() {
   const [presets] = useState<PresetScenario[]>(() => getPresetScenarios());
-  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'processing' | 'results' | 'history'>('landing');
+  const [currentView, setCurrentView] = useState<'landing' | 'upload' | 'processing' | 'results' | 'history' | 'about'>('landing');
+
+  // Automatically scroll to top on page/view navigation
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+  }, [currentView]);
   const [activePresetId, setActivePresetId] = useState<string>('preset_clavius_basin');
 
   // Source & Reference Image Metadata
@@ -197,6 +203,13 @@ export function App() {
             runs={historicalRuns}
             onLoadRun={handleLoadHistoricalRun}
             onNewRun={() => setCurrentView('upload')}
+          />
+        )}
+
+        {currentView === 'about' && (
+          <AboutView
+            onStartRegistration={() => setCurrentView('upload')}
+            onNavigateHome={() => setCurrentView('landing')}
           />
         )}
       </main>

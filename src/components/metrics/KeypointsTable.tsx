@@ -71,11 +71,6 @@ export const KeypointsTable: React.FC<KeypointsTableProps> = ({
       title="Correspondence Keypoint Telemetry"
       badge={`${keypoints.length} VECTORS`}
       badgeColor="neutral"
-      headerRight={
-        <div className="flex items-center space-x-2 text-xs font-mono">
-          <span className="text-regolith-400">Click row to center & inspect</span>
-        </div>
-      }
     >
       <div className="space-y-4 font-mono text-xs">
         {/* Controls Toolbar */}
