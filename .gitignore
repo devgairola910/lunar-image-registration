@@ -14,14 +14,24 @@ env/
 node_modules/
 Frontend/lunar-image-registration/node_modules/
 dist/
+dist-ssr/
 Frontend/lunar-image-registration/dist/
 .vite/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+logs/
+*.log
 
 # IDE & OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
