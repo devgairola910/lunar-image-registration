@@ -149,9 +149,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       setIsFinished(true);
       setCurrentStageIdx(STAGES.length);
       setStageProgress(100);
-      if (logs.length === 0) {
-        setLogs(getCompletedLogs());
-      }
       return;
     }
 

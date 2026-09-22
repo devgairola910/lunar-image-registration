@@ -18,6 +18,7 @@ interface HeaderProps {
   presets: PresetScenario[];
   activePresetId?: string;
   hasResults: boolean;
+  isBackendLive?: boolean;
 }
 
 interface NavItem {
@@ -33,7 +34,8 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectPreset,
   presets,
   activePresetId,
-  hasResults
+  hasResults,
+  isBackendLive = false
 }) => {
   const navItems: NavItem[] = [
     { id: 'landing', label: 'Mission Briefing', icon: Home, disabled: false },
@@ -70,9 +72,17 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-3 text-[10px] sm:text-[11px]">
           <span className="hidden lg:inline text-regolith-300">Space Applications Centre (SAC), Ahmedabad</span>
           <span className="text-regolith-600 hidden lg:inline">•</span>
+          <div className={`inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded border text-[10px] font-mono ${
+            isBackendLive 
+              ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
+              : 'bg-amber-950/80 border-amber-500/40 text-amber-300'
+          }`}>
+            <span className={`w-2 h-2 rounded-full ${isBackendLive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+            <span>{isBackendLive ? 'API LIVE (PyTorch)' : 'SIMULATION MODE'}</span>
+          </div>
           <div className="inline-flex items-center space-x-1.5 px-2 py-0.5 rounded bg-white/5 border border-white/10 text-regolith-200">
             <ShieldCheck className="w-3 h-3 text-regolith-300" />
-            <span>PDS4 COMPLIANT // SPICE IAU-2015</span>
+            <span>PDS4 COMPLIANT</span>
           </div>
         </div>
       </div>

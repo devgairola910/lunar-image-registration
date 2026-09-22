@@ -22,12 +22,28 @@ async function urlToFile(url: string, filename: string, mimeType: string = 'imag
 }
 
 export interface BackendRegistrationResult {
-  status: 'success' | 'failed_low_correspondence' | 'error';
+  status: 'success' | 'failed_low_correspondence' | 'error' | string;
   message?: string;
   execution_time_seconds: number;
   metrics: RegistrationMetrics;
   keypoints: KeypointMatch[];
   match_points: number[][];
+  isLiveBackend: boolean;
+}
+
+export async function checkBackendHealth(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const response = await fetch(`${API_BASE_URL}/api/v1/health`, {
+      method: 'GET',
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 export async function runRegistrationApi(
@@ -92,7 +108,7 @@ export async function runRegistrationApi(
     inlierRatio: inlierRatioPct,
     totalMatches: backendMetrics.total_candidates ?? backendMetrics.total_matches ?? 0,
     inlierMatches: backendMetrics.inlier_count ?? 0,
-    spatialCoverage: backendMetrics.spatial_coverage ?? 0.0,
+    spatialCoverage: backendMetrics.spatial_coverage ?? backendMetrics.spatial_coverage_4x4 ?? 0.0,
     confidenceScore: confidenceScorePct,
     confidenceLevel: confidenceLevel,
     processingTimeTotalMs: Math.round((data.execution_time_seconds || 0) * 1000),
@@ -104,9 +120,8 @@ export async function runRegistrationApi(
       { stage: 'Sub-Pixel Refinement', timeMs: Math.round((data.execution_time_seconds || 1.5) * 100), color: '#f59e0b' }
     ],
     homographyMatrix: data.transformation_matrix || backendMetrics.homography_matrix || [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-    tileHeatmap: backendMetrics.tile_heatmap || []
+    tileHeatmap: backendMetrics.tile_heatmap || backendMetrics.tile_heatmap_4x4 || []
   };
-
 
   // Convert keypoints array
   const rawKeypoints: any[] = data.keypoints || [];
@@ -125,9 +140,10 @@ export async function runRegistrationApi(
   return {
     status: data.status,
     message: data.message,
-    execution_time_seconds: data.execution_time_seconds,
+    execution_time_seconds: data.execution_time_seconds || 0,
     metrics,
     keypoints,
-    match_points: data.match_points || []
+    match_points: data.match_points || [],
+    isLiveBackend: true
   };
 }

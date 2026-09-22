@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { 
   Upload, 
   SunMedium, 
@@ -7,10 +7,17 @@ import {
   AlertCircle, 
   CheckCircle2, 
   RotateCcw,
+  XCircle
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
 import type { ImageMetadata, SensorType, PresetScenario } from '../../types/registration';
 import { SENSORS } from '../../utils/mockDataGenerator';
+import { 
+  validateImageFile, 
+  validateMetadataValues, 
+  clampNumber, 
+  MAX_FILE_SIZE_MB 
+} from '../../utils/validation';
 
 interface UploadViewProps {
   sourceMeta: ImageMetadata;
@@ -37,6 +44,38 @@ export const UploadView: React.FC<UploadViewProps> = ({
 }) => {
   const srcInputRef = useRef<HTMLInputElement>(null);
   const refInputRef = useRef<HTMLInputElement>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const processFile = (file: File, target: 'source' | 'reference') => {
+    const valResult = validateImageFile(file);
+    if (!valResult.valid) {
+      setUploadError(valResult.error || 'Invalid file uploaded.');
+      return;
+    }
+    setUploadError(null);
+
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setUploadError(`Failed to read file "${file.name}". Please try another image.`);
+    };
+    reader.onload = (event) => {
+      const previewUrl = event.target?.result as string;
+      if (target === 'source') {
+        onUpdateSourceMeta({
+          previewUrl,
+          imageName: file.name,
+          customFile: file
+        });
+      } else {
+        onUpdateRefMeta({
+          previewUrl,
+          imageName: file.name,
+          customFile: file
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleFileUpload = (
     e: React.ChangeEvent<HTMLInputElement>, 
@@ -44,53 +83,42 @@ export const UploadView: React.FC<UploadViewProps> = ({
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const previewUrl = event.target?.result as string;
-      if (target === 'source') {
-        onUpdateSourceMeta({
-          previewUrl,
-          imageName: file.name,
-          customFile: file
-        });
-      } else {
-        onUpdateRefMeta({
-          previewUrl,
-          imageName: file.name,
-          customFile: file
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+    processFile(file, target);
+    e.target.value = '';
   };
 
   const handleDrop = (e: React.DragEvent, target: 'source' | 'reference') => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const previewUrl = event.target?.result as string;
-      if (target === 'source') {
-        onUpdateSourceMeta({
-          previewUrl,
-          imageName: file.name,
-          customFile: file
-        });
-      } else {
-        onUpdateRefMeta({
-          previewUrl,
-          imageName: file.name,
-          customFile: file
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+    processFile(file, target);
   };
 
-  const isReadyToRun = Boolean(sourceMeta.previewUrl && referenceMeta.previewUrl);
+  const sourceValidation = validateMetadataValues(
+    sourceMeta.centerCoordinates.lat,
+    sourceMeta.centerCoordinates.lon,
+    sourceMeta.resolution,
+    sourceMeta.sunElevation
+  );
+
+  const refValidation = validateMetadataValues(
+    referenceMeta.centerCoordinates.lat,
+    referenceMeta.centerCoordinates.lon,
+    referenceMeta.resolution,
+    referenceMeta.sunElevation,
+    referenceMeta.phaseAngle
+  );
+
+  const isMetadataValid = 
+    sourceValidation.lat.valid &&
+    sourceValidation.lon.valid &&
+    sourceValidation.resolution.valid &&
+    refValidation.lat.valid &&
+    refValidation.lon.valid &&
+    refValidation.resolution.valid &&
+    (refValidation.phaseAngle ? refValidation.phaseAngle.valid : true);
+
+  const isReadyToRun = Boolean(sourceMeta.previewUrl && referenceMeta.previewUrl) && isMetadataValid;
 
   return (
     <div className="space-y-8 pb-16 max-w-7xl mx-auto">
@@ -137,6 +165,26 @@ export const UploadView: React.FC<UploadViewProps> = ({
         </div>
       </div>
 
+      {/* Upload Validation Alert Banner */}
+      {uploadError && (
+        <div className="p-4 rounded-xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs font-mono flex items-start justify-between gap-3 shadow-lg">
+          <div className="flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <span className="font-bold uppercase tracking-wide">Ingestion Validation Error</span>
+              <p className="mt-0.5 text-red-300">{uploadError}</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setUploadError(null)}
+            className="text-red-400 hover:text-white transition-colors cursor-pointer p-0.5"
+            title="Dismiss error alert"
+          >
+            <XCircle className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Grid: Two Upload Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* SOURCE IMAGE PANEL */}
@@ -161,7 +209,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
               <input
                 ref={srcInputRef}
                 type="file"
-                accept="image/*"
+                accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,image/*"
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'source')}
               />
@@ -196,7 +244,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                     Drop Source Frame or <span className="text-white underline">Browse</span>
                   </div>
                   <p className="text-[11px] text-regolith-500">
-                    Supports GeoTIFF, PNG, JPG (ISRO Level-1/2 PDS4)
+                    Supports PNG, JPG, TIFF, WebP (Max {MAX_FILE_SIZE_MB}MB)
                   </p>
                 </div>
               )}
@@ -265,10 +313,23 @@ export const UploadView: React.FC<UploadViewProps> = ({
                 <input
                   type="number"
                   step="0.05"
+                  min="0.01"
+                  max="500"
                   value={sourceMeta.resolution}
-                  onChange={(e) => onUpdateSourceMeta({ resolution: Number(e.target.value) })}
-                  className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    onUpdateSourceMeta({ resolution: isNaN(val) ? 0.01 : val });
+                  }}
+                  onBlur={() => {
+                    onUpdateSourceMeta({ resolution: clampNumber(sourceMeta.resolution, 0.01, 500) });
+                  }}
+                  className={`w-full bg-obsidian-900 border rounded-lg px-3 py-2 text-white focus:outline-none transition-colors ${
+                    sourceValidation.resolution.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                  }`}
                 />
+                {!sourceValidation.resolution.valid && (
+                  <p className="text-[10px] text-amber-400 mt-1">{sourceValidation.resolution.message}</p>
+                )}
               </div>
 
               {/* Lunar Coordinates */}
@@ -278,34 +339,66 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <input
                     type="number"
                     step="0.1"
+                    min="-90"
+                    max="90"
                     value={sourceMeta.centerCoordinates.lat}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       onUpdateSourceMeta({
                         centerCoordinates: {
                           ...sourceMeta.centerCoordinates,
-                          lat: Number(e.target.value)
+                          lat: isNaN(val) ? 0 : val
                         }
-                      })
-                    }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                      });
+                    }}
+                    onBlur={() => {
+                      onUpdateSourceMeta({
+                        centerCoordinates: {
+                          ...sourceMeta.centerCoordinates,
+                          lat: clampNumber(sourceMeta.centerCoordinates.lat, -90, 90)
+                        }
+                      });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-2 text-white focus:outline-none transition-colors ${
+                      sourceValidation.lat.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {!sourceValidation.lat.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{sourceValidation.lat.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-regolith-400 mb-1">Center Lon (°)</label>
                   <input
                     type="number"
                     step="0.1"
+                    min="-180"
+                    max="180"
                     value={sourceMeta.centerCoordinates.lon}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       onUpdateSourceMeta({
                         centerCoordinates: {
                           ...sourceMeta.centerCoordinates,
-                          lon: Number(e.target.value)
+                          lon: isNaN(val) ? 0 : val
                         }
-                      })
-                    }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-white/30"
+                      });
+                    }}
+                    onBlur={() => {
+                      onUpdateSourceMeta({
+                        centerCoordinates: {
+                          ...sourceMeta.centerCoordinates,
+                          lon: clampNumber(sourceMeta.centerCoordinates.lon, -180, 180)
+                        }
+                      });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-2 text-white focus:outline-none transition-colors ${
+                      sourceValidation.lon.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {!sourceValidation.lon.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{sourceValidation.lon.message}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -334,7 +427,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
               <input
                 ref={refInputRef}
                 type="file"
-                accept="image/*"
+                accept=".png,.jpg,.jpeg,.webp,.tif,.tiff,image/*"
                 className="hidden"
                 onChange={(e) => handleFileUpload(e, 'reference')}
               />
@@ -369,7 +462,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                     Drop Reference Frame or <span className="text-white underline">Browse</span>
                   </div>
                   <p className="text-[11px] text-regolith-500">
-                    ISRO Chandrayaan-2 TMC/OHRC, CH-1 TMC, or ISSDC Mosaic
+                    Supports PNG, JPG, TIFF, WebP (Max {MAX_FILE_SIZE_MB}MB)
                   </p>
                 </div>
               )}
@@ -438,20 +531,46 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <input
                     type="number"
                     step="0.05"
+                    min="0.01"
+                    max="500"
                     value={referenceMeta.resolution}
-                    onChange={(e) => onUpdateRefMeta({ resolution: parseFloat(e.target.value) || 0.5 })}
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      onUpdateRefMeta({ resolution: isNaN(val) ? 0.01 : val });
+                    }}
+                    onBlur={() => {
+                      onUpdateRefMeta({ resolution: clampNumber(referenceMeta.resolution, 0.01, 500) });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-1.5 text-white focus:outline-none transition-colors ${
+                      refValidation.resolution.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {!refValidation.resolution.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{refValidation.resolution.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-regolith-400 mb-1">Phase Angle (°)</label>
                   <input
                     type="number"
                     step="1"
+                    min="0"
+                    max="180"
                     value={referenceMeta.phaseAngle}
-                    onChange={(e) => onUpdateRefMeta({ phaseAngle: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      onUpdateRefMeta({ phaseAngle: isNaN(val) ? 0 : val });
+                    }}
+                    onBlur={() => {
+                      onUpdateRefMeta({ phaseAngle: clampNumber(referenceMeta.phaseAngle || 0, 0, 180) });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-1.5 text-white focus:outline-none transition-colors ${
+                      refValidation.phaseAngle?.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {refValidation.phaseAngle && !refValidation.phaseAngle.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{refValidation.phaseAngle.message}</p>
+                  )}
                 </div>
               </div>
 
@@ -462,34 +581,66 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <input
                     type="number"
                     step="0.1"
+                    min="-90"
+                    max="90"
                     value={referenceMeta.centerCoordinates.lat}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       onUpdateRefMeta({
                         centerCoordinates: {
                           ...referenceMeta.centerCoordinates,
-                          lat: parseFloat(e.target.value) || 0
+                          lat: isNaN(val) ? 0 : val
                         }
-                      })
-                    }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                      });
+                    }}
+                    onBlur={() => {
+                      onUpdateRefMeta({
+                        centerCoordinates: {
+                          ...referenceMeta.centerCoordinates,
+                          lat: clampNumber(referenceMeta.centerCoordinates.lat, -90, 90)
+                        }
+                      });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-1.5 text-white focus:outline-none transition-colors ${
+                      refValidation.lat.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {!refValidation.lat.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{refValidation.lat.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-regolith-400 mb-1">Center Longitude</label>
                   <input
                     type="number"
                     step="0.1"
+                    min="-180"
+                    max="180"
                     value={referenceMeta.centerCoordinates.lon}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
                       onUpdateRefMeta({
                         centerCoordinates: {
                           ...referenceMeta.centerCoordinates,
-                          lon: parseFloat(e.target.value) || 0
+                          lon: isNaN(val) ? 0 : val
                         }
-                      })
-                    }
-                    className="w-full bg-obsidian-900 border border-white/10 rounded-lg px-3 py-1.5 text-white focus:border-white/30 focus:outline-none"
+                      });
+                    }}
+                    onBlur={() => {
+                      onUpdateRefMeta({
+                        centerCoordinates: {
+                          ...referenceMeta.centerCoordinates,
+                          lon: clampNumber(referenceMeta.centerCoordinates.lon, -180, 180)
+                        }
+                      });
+                    }}
+                    className={`w-full bg-obsidian-900 border rounded-lg px-3 py-1.5 text-white focus:outline-none transition-colors ${
+                      refValidation.lon.valid ? 'border-white/10 focus:border-white/30' : 'border-amber-500/60 text-amber-200'
+                    }`}
                   />
+                  {!refValidation.lon.valid && (
+                    <p className="text-[10px] text-amber-400 mt-1">{refValidation.lon.message}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -508,7 +659,11 @@ export const UploadView: React.FC<UploadViewProps> = ({
           ) : (
             <div className="flex items-center space-x-2 text-amber-400">
               <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>UPLOAD OR SELECT PRESET IMAGES FOR BOTH SOURCE & REFERENCE</span>
+              <span>
+                {!sourceMeta.previewUrl || !referenceMeta.previewUrl
+                  ? 'UPLOAD OR SELECT PRESET IMAGES FOR BOTH SOURCE & REFERENCE'
+                  : 'CORRECT OUT-OF-BOUND METADATA VALUES TO PROCEED'}
+              </span>
             </div>
           )}
         </div>

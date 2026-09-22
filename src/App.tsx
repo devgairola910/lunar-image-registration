@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Background } from './components/common/Background';
 import { Header } from './components/common/Header';
 import { Footer } from './components/common/Footer';
@@ -13,6 +13,7 @@ import {
   generateKeypointDataset, 
   getInitialHistoricalRuns 
 } from './utils/mockDataGenerator';
+import { runRegistrationApi, checkBackendHealth } from './utils/api';
 import type { 
   PresetScenario, 
   ImageMetadata, 
@@ -29,7 +30,14 @@ export function App() {
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
   }, [currentView]);
+
   const [activePresetId, setActivePresetId] = useState<string>('preset_clavius_basin');
+  const [isBackendLive, setIsBackendLive] = useState<boolean>(false);
+
+  // Check backend health on startup
+  useEffect(() => {
+    checkBackendHealth().then(setIsBackendLive);
+  }, []);
 
   // Source & Reference Image Metadata
   const [sourceMeta, setSourceMeta] = useState<ImageMetadata>(presets[0].sourceMeta);
@@ -80,46 +88,70 @@ export function App() {
     handleSelectPreset(presets[0]);
   };
 
-  // Trigger Registration Sequence
-  const handleRunRegistration = () => {
-    // Generate fresh keypoints and metrics
-    const randomSeed = Math.floor(Math.random() * 99999);
-    const count = Math.floor(300 + Math.random() * 150);
-    const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
-    const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
-    setKeypointData(generated);
+  const registrationPromiseRef = useRef<Promise<void> | null>(null);
 
-    // New task assigned: reset pipeline completed state & generate fresh task ID
+  // Trigger Registration Sequence
+  const handleRunRegistration = async () => {
     setTaskRunId(`TASK-${Date.now()}`);
     setIsPipelineComplete(false);
-
     setCurrentView('processing');
+
+    const promise = (async () => {
+      try {
+        const apiResult = await runRegistrationApi(sourceMeta, referenceMeta);
+        setKeypointData({
+          metrics: apiResult.metrics,
+          keypoints: apiResult.keypoints
+        });
+        setIsBackendLive(true);
+      } catch (err) {
+        console.warn("Python backend API offline or returned error — falling back to simulation dataset:", err);
+        setIsBackendLive(false);
+
+        const randomSeed = Math.floor(Math.random() * 99999);
+        const count = Math.floor(300 + Math.random() * 150);
+        const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
+        const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
+        setKeypointData(generated);
+      }
+    })();
+
+    registrationPromiseRef.current = promise;
+    await promise;
   };
 
   // Prepare results run without changing active view
-  const handleResultsReady = () => {
+  const handleResultsReady = async () => {
+    if (registrationPromiseRef.current) {
+      await registrationPromiseRef.current;
+    }
+
     setHasResults(true);
 
-    const newRun: HistoricalRun = {
-      id: `RUN-${new Date().getFullYear()}-CH2-${Math.floor(1000 + Math.random() * 9000)}`,
-      title: `${sourceMeta.sensorType} ↔ ${referenceMeta.sensorType} Co-Registration`,
-      targetFeature: `Lunar Coordinates (${sourceMeta.centerCoordinates.lat}°, ${sourceMeta.centerCoordinates.lon}°)`,
-      timestamp: new Date().toUTCString().replace('GMT', 'UTC'),
-      sourceMeta,
-      referenceMeta,
-      metrics: keypointData.metrics,
-      keypoints: keypointData.keypoints
-    };
+    setKeypointData(currentKeypointData => {
+      const newRun: HistoricalRun = {
+        id: `RUN-${new Date().getFullYear()}-CH2-${Math.floor(1000 + Math.random() * 9000)}`,
+        title: `${sourceMeta.sensorType} ↔ ${referenceMeta.sensorType} Co-Registration`,
+        targetFeature: `Lunar Coordinates (${sourceMeta.centerCoordinates.lat}°, ${sourceMeta.centerCoordinates.lon}°)`,
+        timestamp: new Date().toUTCString().replace('GMT', 'UTC'),
+        sourceMeta,
+        referenceMeta,
+        metrics: currentKeypointData.metrics,
+        keypoints: currentKeypointData.keypoints
+      };
 
-    setHistoricalRuns(prev => {
-      if (prev.some(r => r.id === newRun.id)) return prev;
-      return [newRun, ...prev];
+      setHistoricalRuns(prev => {
+        if (prev.some(r => r.id === newRun.id)) return prev;
+        return [newRun, ...prev];
+      });
+
+      return currentKeypointData;
     });
   };
 
   // Explicit user transition to results view
-  const handleGoToResults = () => {
-    handleResultsReady();
+  const handleGoToResults = async () => {
+    await handleResultsReady();
     setCurrentView('results');
   };
 
@@ -148,6 +180,7 @@ export function App() {
         presets={presets}
         activePresetId={activePresetId}
         hasResults={hasResults}
+        isBackendLive={isBackendLive}
       />
 
       {/* Main Content Area */}

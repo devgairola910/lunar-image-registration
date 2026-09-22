@@ -28,6 +28,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   const [contactOrg, setContactOrg] = useState('');
   const [contactMessage, setContactMessage] = useState('');
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [ticketId] = useState(() => Math.floor(100000 + Math.random() * 900000));
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -387,7 +388,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
                 </div>
                 <h4 className="text-lg font-bold text-white font-display">Inquiry Transmitted Successfully</h4>
                 <p className="text-xs text-regolith-300 max-w-md mx-auto">
-                  Your inquiry has been routed to the SAC Lunar Photogrammetry Support Team. Reference ID: <strong className="text-earth-400">#ISRO-SAC-{Math.floor(100000 + Math.random() * 900000)}</strong>
+                  Your inquiry has been routed to the SAC Lunar Photogrammetry Support Team. Reference ID: <strong className="text-earth-400">#ISRO-SAC-{ticketId}</strong>
                 </p>
               </div>
             ) : (

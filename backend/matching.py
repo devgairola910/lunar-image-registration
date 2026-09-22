@@ -180,7 +180,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
                 "inlier_count": 0, "outlier_count": total_candidates,
-                "total_candidates": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0
+                "total_candidates": total_candidates, "total_matches": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0,
+                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
             },
             "correspondences": []
         }
@@ -208,7 +209,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
                 "inlier_count": 0, "outlier_count": total_candidates,
-                "total_candidates": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0
+                "total_candidates": total_candidates, "total_matches": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0,
+                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
             },
             "correspondences": []
         }
@@ -225,7 +227,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
                 "inlier_count": inlier_count, "outlier_count": total_candidates - inlier_count,
-                "total_candidates": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0
+                "total_candidates": total_candidates, "total_matches": total_candidates, "inlier_ratio": 0.0, "confidence_score": 0.0,
+                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
             },
             "correspondences": []
         }
@@ -241,8 +244,9 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
                 "inlier_count": inlier_count, "outlier_count": total_candidates - inlier_count,
-                "total_candidates": total_candidates, "inlier_ratio": inlier_ratio_pct,
-                "confidence_score": round(inlier_ratio_val * 50.0, 1)
+                "total_candidates": total_candidates, "total_matches": total_candidates, "inlier_ratio": inlier_ratio_pct,
+                "confidence_score": round(inlier_ratio_val * 50.0, 1),
+                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
             },
             "correspondences": []
         }
@@ -286,18 +290,9 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
     y_diff = np.abs(inliers_dst[:, 1] - projected_dst[:, 1])
     residuals = np.sqrt(x_diff**2 + y_diff**2)
 
-    # Sub-pixel filtering for clean RMSE computation (< 2.2px bound)
-    valid_subpixel = (residuals <= 2.2) & (y_diff <= 1.5)
-    if np.sum(valid_subpixel) >= 4:
-        sub_res = residuals[valid_subpixel]
-        sub_dx = x_diff[valid_subpixel]
-        sub_dy = y_diff[valid_subpixel]
-    else:
-        sub_res, sub_dx, sub_dy = residuals, x_diff, y_diff
-
-    rmse_total = round(float(np.sqrt(np.mean(sub_res**2))), 2) if len(sub_res) > 0 else 0.0
-    mean_dx = round(float(np.mean(sub_dx)), 2) if len(sub_dx) > 0 else 0.0
-    mean_dy = round(float(np.mean(sub_dy)), 2) if len(sub_dy) > 0 else 0.0
+    rmse_total = round(float(np.sqrt(np.mean(residuals**2))), 2) if len(residuals) > 0 else 0.0
+    mean_dx = round(float(np.mean(x_diff)), 2) if len(x_diff) > 0 else 0.0
+    mean_dy = round(float(np.mean(y_diff)), 2) if len(y_diff) > 0 else 0.0
 
     # Composite Mission Confidence Score Formula:
     # Base 82.0% for verified sub-pixel lock (Inlier Ratio >= 60% & RMSE < 2.5px)
@@ -410,7 +405,7 @@ def match_lunar_images(source_bytes: bytes, reference_bytes: bytes) -> Dict[str,
                 "metrics": {
                     "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
                     "inlier_count": 0, "outlier_count": total_matches,
-                    "total_candidates": total_matches, "inlier_ratio": 0.0, "confidence_score": 0.0,
+                    "total_candidates": total_matches, "total_matches": total_matches, "inlier_ratio": 0.0, "confidence_score": 0.0,
                     "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0,
                     "homography_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
                     "tile_heatmap": []
@@ -475,7 +470,8 @@ def match_lunar_images(source_bytes: bytes, reference_bytes: bytes) -> Dict[str,
             rx, ry = float(ref_pts_orig[i, 0]), float(ref_pts_orig[i, 1])
             is_in = bool(inliers_mask[i])
             
-            match_points.append([round(sx, 2), round(sy, 2), round(rx, 2), round(ry, 2)])
+            if is_in:
+                match_points.append([round(sx, 2), round(sy, 2), round(rx, 2), round(ry, 2)])
             
             corr_item = correspondences[i] if i < len(correspondences) else {}
             res_err = corr_item.get("residual_px", 4.50)
@@ -522,7 +518,7 @@ def match_lunar_images(source_bytes: bytes, reference_bytes: bytes) -> Dict[str,
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
-                "inlier_count": 0, "outlier_count": 0, "total_candidates": 0,
+                "inlier_count": 0, "outlier_count": 0, "total_candidates": 0, "total_matches": 0,
                 "inlier_ratio": 0.0, "confidence_score": 0.0, "spatial_coverage": 0.0,
                 "homography_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
                 "tile_heatmap": []

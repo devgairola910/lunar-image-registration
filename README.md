@@ -82,10 +82,7 @@ Hack2/
 │   ├── test_api.py                 # Synthetic crater test generator
 │   ├── eval_ground_truth.py        # Ground-truth precision verification script
 │   └── test_negative_cases.py     # Negative control & corrupted file rejection harness
-├── Frontend/                       # React (Vite) Telemetry Web Portal
-│   └── lunar-image-registration/
-│       ├── src/                    # Components, Leaflet/Canvas maps & Recharts dashboards
-│       └── package.json            # Node.js dependencies
+├── src/                            # React (Vite) Telemetry Web Portal (Components, Canvas, Recharts)
 ├── Test/                           # Labeled Chandrayaan-2 Lunar Test Image Crops
 │   ├── 01_shift_rotate_src.png     # Rotation & shift test pair
 │   ├── 01_shift_rotate_ref.png
@@ -98,6 +95,7 @@ Hack2/
 │   ├── ground_truth.json           # Exact homography ground-truth matrices
 │   ├── score_against_truth.py      # Automated precision evaluator
 │   └── README.md                   # Test dataset specification
+├── package.json                    # Node.js dependencies
 └── README.md                       # Project Documentation
 ```
 
@@ -137,9 +135,6 @@ python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
 In a new terminal window:
 
 ```powershell
-# Navigate to the frontend directory
-cd Frontend/lunar-image-registration
-
 # Install frontend dependencies
 npm install
 
