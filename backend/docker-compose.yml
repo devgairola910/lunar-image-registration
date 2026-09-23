@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  chandradrishti-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chandradrishti_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    # Option to specify env file if Supabase / extra credentials are used
+    env_file:
+      - .env
