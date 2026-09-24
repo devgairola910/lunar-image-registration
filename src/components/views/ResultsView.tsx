@@ -6,6 +6,7 @@ import {
   FileSpreadsheet, 
   CheckCircle2, 
   Compass,
+  AlertTriangle
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
 import { LunarCanvasViewer } from '../viewer/LunarCanvasViewer';
@@ -86,10 +87,17 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
         <div>
           <div className="flex items-center text-regolith-300 font-mono text-xs uppercase tracking-wider mb-1 font-semibold">
-            <span>Registration Sequence Locked // Sub-Pixel Convergence</span>
+            {metrics.confidenceLevel === 'LOW' ? (
+              <span className="text-telemetry-red font-bold flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-telemetry-red" />
+                <span>Low Correspondence Lock // Unreliable Homography</span>
+              </span>
+            ) : (
+              <span>Registration Sequence Locked // Sub-Pixel Convergence</span>
+            )}
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
-            Results & Verification Dashboard
+            Results &amp; Verification Dashboard
           </h2>
           <p className="text-xs sm:text-sm font-mono text-regolith-200">
             Source: <strong className="text-white">{sourceMeta.sensorType}</strong> ({sourceMeta.resolution}m/px) ↔ Reference: <strong className="text-white">{referenceMeta.sensorType}</strong> ({referenceMeta.resolution}m/px)
@@ -115,6 +123,21 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Low-Correspondence Warning Alert Banner */}
+      {(metrics.confidenceLevel === 'LOW' || metrics.confidenceScore < 45) && (
+        <div className="p-4 rounded-xl bg-rose-950/40 border border-telemetry-red/50 text-rose-200 font-mono text-xs flex items-start space-x-3 shadow-lg animate-fadeIn">
+          <AlertTriangle className="w-5 h-5 text-telemetry-red flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <div className="font-bold text-white uppercase tracking-wider text-xs">
+              ⚠️ Irrelevant / Low-Correspondence Image Pair Detected (Confidence: {metrics.confidenceScore.toFixed(1)}%)
+            </div>
+            <div>
+              The provided image pair lacks sufficient overlapping lunar surface features or structural ground tie-points. Keypoint correspondence density is low ({metrics.inlierRatio.toFixed(1)}% inliers), resulting in high residual error ({metrics.rmseTotal.toFixed(2)} px). Georeferenced overlay transformation cannot be guaranteed.
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* SECTION 1: Multi-Mode Lunar Image Viewport */}
       <div className="space-y-3">

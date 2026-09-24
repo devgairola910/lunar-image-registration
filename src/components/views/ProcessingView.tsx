@@ -9,7 +9,9 @@ import {
   SunMedium, 
   Maximize2, 
   Target,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  XCircle
 } from 'lucide-react';
 import { ReticleFrame } from '../common/ReticleFrame';
 import type { PipelineStageInfo, RegistrationMetrics, ImageMetadata } from '../../types/registration';
@@ -140,6 +142,8 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     }
   }, [logs]);
 
+  const isLowConfidence = metrics.confidenceLevel === 'LOW' || metrics.confidenceScore < 45;
+
   // Main Pipeline Step Execution Engine - Runs once per unique taskRunId
   useEffect(() => {
     const currentTaskId = taskRunId || 'DEFAULT_TASK';
@@ -170,11 +174,21 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
         onResultsReadyRef.current?.();
         onMarkCompletedRef.current?.();
         const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
-        setLogs(prev => [
-          ...prev,
-          `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
-          `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
-        ]);
+        
+        if (isLowConfidence) {
+          setLogs(prev => [
+            ...prev,
+            `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
+            `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
+            `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
+          ]);
+        } else {
+          setLogs(prev => [
+            ...prev,
+            `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
+            `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
+          ]);
+        }
         return;
       }
 
@@ -213,7 +227,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       clearTimeout(timer);
       clearInterval(progressInterval);
     };
-  }, [taskRunId, isAlreadyCompleted]);
+  }, [taskRunId, isAlreadyCompleted, isLowConfidence, metrics]);
 
   const handleSkip = () => {
     onResultsReadyRef.current?.();
@@ -239,10 +253,17 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
         <div>
           <div className="flex items-center space-x-2 text-regolith-400 font-mono text-xs uppercase tracking-wider mb-1">
             {isFinished ? (
-              <>
-                <CheckCircle2 className="w-4 h-4 text-telemetry-green" />
-                <span className="text-telemetry-green font-bold">All 5 Pipeline Stages Completed // Systems Nominal</span>
-              </>
+              isLowConfidence ? (
+                <>
+                  <AlertTriangle className="w-4 h-4 text-telemetry-red" />
+                  <span className="text-telemetry-red font-bold">Pipeline Ended with Low Confidence Warning</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-telemetry-green" />
+                  <span className="text-telemetry-green font-bold">All 5 Pipeline Stages Completed // Systems Nominal</span>
+                </>
+              )
             ) : (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
@@ -251,18 +272,22 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
             )}
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
-            {isFinished ? 'Lunar Pipeline Execution Complete' : 'Processing Lunar Pipeline'}
+            {isFinished ? (isLowConfidence ? 'Low Correspondence Warning' : 'Lunar Pipeline Execution Complete') : 'Processing Lunar Pipeline'}
           </h2>
           <p className="text-xs font-mono text-regolith-400">
             {sourceMeta.sensorType} ({sourceMeta.resolution}m) ➔ {referenceMeta.sensorType} ({referenceMeta.resolution}m)
           </p>
         </div>
 
-        {/* Action button: When finished, shows prominent "View Results Telemetry". If running, shows "Fast-Forward" */}
+        {/* Action button */}
         {isFinished ? (
           <button
             onClick={onComplete}
-            className="inline-flex items-center space-x-2.5 px-6 py-3 rounded-xl bg-white hover:bg-regolith-200 text-black font-mono text-xs font-extrabold tracking-wide uppercase transition-all self-start sm:self-auto cursor-pointer shadow-xl hover:scale-105"
+            className={`inline-flex items-center space-x-2.5 px-6 py-3 rounded-xl font-mono text-xs font-extrabold tracking-wide uppercase transition-all self-start sm:self-auto cursor-pointer shadow-xl hover:scale-105 ${
+              isLowConfidence 
+                ? 'bg-telemetry-red hover:bg-rose-600 text-white shadow-rose-900/40' 
+                : 'bg-white hover:bg-regolith-200 text-black'
+            }`}
           >
             <span>View Results Telemetry</span>
             <ArrowRight className="w-4 h-4" />
@@ -279,13 +304,19 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       </div>
 
       {/* Global Progress Bar */}
-      <div className="p-4 rounded-xl mission-card border border-white/10 space-y-2">
+      <div className={`p-4 rounded-xl mission-card border space-y-2 ${isLowConfidence && isFinished ? 'border-telemetry-red/40 bg-rose-950/20' : 'border-white/10'}`}>
         <div className="flex justify-between items-center text-xs font-mono">
           <span className="text-regolith-300">
             {isFinished ? (
-              <span className="text-telemetry-green font-bold">
-                ALL 5 STAGES COMPLETED &amp; CERTIFIED (IAU 2015 FRAME LOCKED)
-              </span>
+              isLowConfidence ? (
+                <span className="text-telemetry-red font-bold">
+                  LOW CORRESPONDENCE DETECTED (CONFIDENCE: {metrics.confidenceScore.toFixed(1)}%)
+                </span>
+              ) : (
+                <span className="text-telemetry-green font-bold">
+                  ALL 5 STAGES COMPLETED &amp; CERTIFIED (IAU 2015 FRAME LOCKED)
+                </span>
+              )
             ) : (
               <>
                 STAGE {Math.min(STAGES.length, currentStageIdx + 1)} OF {STAGES.length}:{' '}
@@ -295,7 +326,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
               </>
             )}
           </span>
-          <span className={`font-bold ${isFinished ? 'text-telemetry-green' : 'text-white'}`}>
+          <span className={`font-bold ${isFinished ? (isLowConfidence ? 'text-telemetry-red' : 'text-telemetry-green') : 'text-white'}`}>
             {isFinished ? '100%' : `${overallProgress}%`}
           </span>
         </div>
@@ -303,7 +334,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
           <div
             className={`h-full transition-all duration-150 ${
               isFinished
-                ? 'bg-telemetry-green shadow-[0_0_12px_rgba(34,197,94,0.5)]'
+                ? isLowConfidence 
+                  ? 'bg-telemetry-red shadow-[0_0_12px_rgba(239,68,68,0.6)]' 
+                  : 'bg-telemetry-green shadow-[0_0_12px_rgba(34,197,94,0.5)]'
                 : 'bg-gradient-to-r from-earth-400 via-white to-telemetry-green'
             }`}
             style={{ width: isFinished ? '100%' : `${overallProgress}%` }}
@@ -324,7 +357,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                 isActive
                   ? 'mission-card-glow border-white/40 shadow-instrument'
                   : isCompleted
-                  ? 'bg-obsidian-900 border-telemetry-green/30 text-regolith-200'
+                  ? isLowConfidence && isFinished
+                    ? 'bg-rose-950/20 border-telemetry-red/40 text-telemetry-red'
+                    : 'bg-obsidian-900 border-telemetry-green/30 text-regolith-200'
                   : 'bg-obsidian-950 border-white/5 text-regolith-600 opacity-50'
               }`}
             >
@@ -333,10 +368,17 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                 <div className="flex items-center justify-between font-mono text-xs">
                   <span className="text-[10px] text-regolith-400 font-semibold uppercase tracking-wider">PHASE</span>
                   {isCompleted ? (
-                    <div className="flex items-center space-x-1 text-telemetry-green font-semibold">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-telemetry-green" />
-                      <span className="text-[10px]">DONE</span>
-                    </div>
+                    isLowConfidence && isFinished ? (
+                      <div className="flex items-center space-x-1 text-telemetry-red font-semibold">
+                        <XCircle className="w-3.5 h-3.5 text-telemetry-red" />
+                        <span className="text-[10px]">WARN</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-1 text-telemetry-green font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-telemetry-green" />
+                        <span className="text-[10px]">DONE</span>
+                      </div>
+                    )
                   ) : isActive ? (
                     <div className="flex items-center space-x-1 text-white font-bold">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-telemetry-green" />
@@ -354,7 +396,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                       isActive
                         ? 'bg-white/10 text-white'
                         : isCompleted
-                        ? 'bg-telemetry-green/10 text-telemetry-green'
+                        ? isLowConfidence && isFinished
+                          ? 'bg-telemetry-red/20 text-telemetry-red'
+                          : 'bg-telemetry-green/10 text-telemetry-green'
                         : 'bg-obsidian-900 text-regolith-600'
                     }`}
                   >
@@ -362,7 +406,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                   </div>
                   <h4
                     className={`text-xs font-bold font-display leading-tight ${
-                      isActive ? 'text-white' : isCompleted ? 'text-regolith-100' : 'text-regolith-500'
+                      isActive ? 'text-white' : isCompleted ? (isLowConfidence && isFinished ? 'text-rose-200' : 'text-regolith-100') : 'text-regolith-500'
                     }`}
                   >
                     {stage.name}
@@ -380,7 +424,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
                   <div
                     className={`h-full transition-all duration-75 ${
                       isCompleted
-                        ? 'bg-telemetry-green w-full shadow-[0_0_8px_rgba(34,197,94,0.4)]'
+                        ? isLowConfidence && isFinished
+                          ? 'bg-telemetry-red w-full shadow-[0_0_8px_rgba(239,68,68,0.4)]'
+                          : 'bg-telemetry-green w-full shadow-[0_0_8px_rgba(34,197,94,0.4)]'
                         : isActive
                         ? 'bg-telemetry-green'
                         : 'w-0'
@@ -396,24 +442,36 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
 
       {/* Completion Banner */}
       {isFinished && (
-        <div className="p-5 rounded-2xl bg-obsidian-850/95 border border-telemetry-green/40 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn shadow-2xl">
+        <div className={`p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn shadow-2xl border ${
+          isLowConfidence 
+            ? 'bg-rose-950/30 border-telemetry-red/50 shadow-rose-950/20' 
+            : 'bg-obsidian-850/95 border-telemetry-green/40'
+        }`}>
           <div className="flex items-center space-x-3.5">
-            <div className="w-12 h-12 rounded-xl bg-telemetry-green/10 border border-telemetry-green/30 flex items-center justify-center text-telemetry-green flex-shrink-0">
-              <CheckCircle2 className="w-7 h-7" />
+            <div className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 ${
+              isLowConfidence 
+                ? 'bg-telemetry-red/20 border-telemetry-red/40 text-telemetry-red' 
+                : 'bg-telemetry-green/10 border-telemetry-green/30 text-telemetry-green'
+            }`}>
+              {isLowConfidence ? <AlertTriangle className="w-7 h-7" /> : <CheckCircle2 className="w-7 h-7" />}
             </div>
             <div>
               <div className="text-white font-bold text-base font-display">
-                All 5 Pipeline Stages Successfully Completed &amp; Certified
+                {isLowConfidence ? 'Low-Correspondence / Irrelevant Image Pair Detected' : 'All 5 Pipeline Stages Successfully Completed & Certified'}
               </div>
               <div className="text-xs font-mono text-regolith-300 mt-0.5">
-                RMSE: <strong className="text-telemetry-green">{metrics.rmseTotal.toFixed(3)} px</strong> • Inlier Ratio: <strong className="text-telemetry-green">{metrics.inlierRatio > 1 ? metrics.inlierRatio.toFixed(1) : (metrics.inlierRatio * 100).toFixed(1)}%</strong> • Parabolic Sub-Pixel Covariance Converged
+                RMSE: <strong className={isLowConfidence ? 'text-telemetry-red' : 'text-telemetry-green'}>{metrics.rmseTotal.toFixed(3)} px</strong> • Inlier Ratio: <strong className={isLowConfidence ? 'text-telemetry-red' : 'text-telemetry-green'}>{metrics.inlierRatio > 1 ? metrics.inlierRatio.toFixed(1) : (metrics.inlierRatio * 100).toFixed(1)}%</strong> • Confidence: <strong className={isLowConfidence ? 'text-telemetry-red font-bold' : 'text-telemetry-green'}>{metrics.confidenceScore.toFixed(1)}% ({metrics.confidenceLevel})</strong>
               </div>
             </div>
           </div>
 
           <button
             onClick={onComplete}
-            className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-white hover:bg-regolith-200 text-black font-extrabold font-mono text-xs tracking-wider uppercase transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-2xl hover:scale-105"
+            className={`w-full sm:w-auto px-7 py-3.5 rounded-xl font-extrabold font-mono text-xs tracking-wider uppercase transition-all flex items-center justify-center space-x-2.5 cursor-pointer shadow-2xl hover:scale-105 ${
+              isLowConfidence 
+                ? 'bg-telemetry-red hover:bg-rose-600 text-white shadow-rose-900/50' 
+                : 'bg-white hover:bg-regolith-200 text-black'
+            }`}
           >
             <span>View Results Telemetry</span>
             <ArrowRight className="w-4 h-4" />

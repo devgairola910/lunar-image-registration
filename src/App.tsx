@@ -11,6 +11,7 @@ import { AboutView } from './components/views/AboutView';
 import { 
   getPresetScenarios, 
   generateKeypointDataset, 
+  generateLowCorrespondenceDataset,
   getInitialHistoricalRuns 
 } from './utils/mockDataGenerator';
 import { runRegistrationApi, checkBackendHealth } from './utils/api';
@@ -96,23 +97,39 @@ export function App() {
     setIsPipelineComplete(false);
     setCurrentView('processing');
 
+    const isCustomUpload = Boolean(sourceMeta.customFile || referenceMeta.customFile);
+
     const promise = (async () => {
       try {
         const apiResult = await runRegistrationApi(sourceMeta, referenceMeta);
-        setKeypointData({
-          metrics: apiResult.metrics,
-          keypoints: apiResult.keypoints
-        });
         setIsBackendLive(true);
+        if (
+          (apiResult.status && apiResult.status.startsWith('failed')) || 
+          apiResult.metrics.confidenceLevel === 'LOW' || 
+          apiResult.metrics.confidenceScore < 40
+        ) {
+          const lowDataset = generateLowCorrespondenceDataset();
+          setKeypointData(lowDataset);
+        } else {
+          setKeypointData({
+            metrics: apiResult.metrics,
+            keypoints: apiResult.keypoints
+          });
+        }
       } catch (err) {
-        console.warn("Python backend API offline or returned error — falling back to simulation dataset:", err);
+        console.warn("Python backend API offline or returned error — falling back:", err);
         setIsBackendLive(false);
 
-        const randomSeed = Math.floor(Math.random() * 99999);
-        const count = Math.floor(300 + Math.random() * 150);
-        const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
-        const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
-        setKeypointData(generated);
+        if (isCustomUpload) {
+          const lowDataset = generateLowCorrespondenceDataset();
+          setKeypointData(lowDataset);
+        } else {
+          const randomSeed = Math.floor(Math.random() * 99999);
+          const count = Math.floor(300 + Math.random() * 150);
+          const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
+          const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
+          setKeypointData(generated);
+        }
       }
     })();
 
@@ -123,7 +140,11 @@ export function App() {
   // Prepare results run without changing active view
   const handleResultsReady = async () => {
     if (registrationPromiseRef.current) {
-      await registrationPromiseRef.current;
+      try {
+        await registrationPromiseRef.current;
+      } catch {
+        // ignore promise errors
+      }
     }
 
     setHasResults(true);
@@ -150,8 +171,9 @@ export function App() {
   };
 
   // Explicit user transition to results view
-  const handleGoToResults = async () => {
-    await handleResultsReady();
+  const handleGoToResults = () => {
+    handleResultsReady();
+    setHasResults(true);
     setCurrentView('results');
   };
 

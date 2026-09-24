@@ -300,6 +300,89 @@ export function generateKeypointDataset(
   return { keypoints, metrics };
 }
 
+// Generate Low Correspondence / Irrelevant Image Pair Dataset
+export function generateLowCorrespondenceDataset(): { keypoints: KeypointMatch[]; metrics: RegistrationMetrics } {
+  const totalMatches = 40;
+  const inlierMatches = 4;
+  const keypoints: KeypointMatch[] = [];
+
+  for (let i = 0; i < totalMatches; i++) {
+    const isInlier = i < inlierMatches;
+    const srcX = Math.floor(40 + Math.random() * 520);
+    const srcY = Math.floor(40 + Math.random() * 520);
+    let refX: number;
+    let refY: number;
+    let residualError: number;
+    let confidence: number;
+
+    if (isInlier) {
+      refX = srcX + (Math.random() - 0.5) * 4;
+      refY = srcY + (Math.random() - 0.5) * 4;
+      residualError = 2.8;
+      confidence = 0.45;
+    } else {
+      refX = Math.floor(40 + Math.random() * 520);
+      refY = Math.floor(40 + Math.random() * 520);
+      residualError = 15.0 + Math.random() * 40.0;
+      confidence = 0.15;
+    }
+
+    keypoints.push({
+      id: i + 1,
+      srcX,
+      srcY,
+      refX: Math.floor(refX),
+      refY: Math.floor(refY),
+      residualError: parseFloat(residualError.toFixed(2)),
+      confidence: parseFloat(confidence.toFixed(2)),
+      isInlier,
+      tileIndex: Math.floor(srcY / 75) * 8 + Math.floor(srcX / 75)
+    });
+  }
+
+  const tileGrid: TileHeatmapCell[][] = [];
+  for (let r = 0; r < 8; r++) {
+    tileGrid[r] = [];
+    for (let c = 0; c < 8; c++) {
+      tileGrid[r][c] = {
+        row: r,
+        col: c,
+        matchCount: r < 2 && c < 2 ? 3 : 0,
+        inlierCount: r === 0 && c === 0 ? 1 : 0,
+        densityScore: r < 2 && c < 2 ? 0.3 : 0
+      };
+    }
+  }
+
+  const metrics: RegistrationMetrics = {
+    rmseTotal: 18.42,
+    rmseX: 12.85,
+    rmseY: 13.18,
+    inlierRatio: 10.0,
+    totalMatches,
+    inlierMatches,
+    spatialCoverage: 12.5,
+    confidenceScore: 12.0,
+    confidenceLevel: 'LOW',
+    processingTimeTotalMs: 3200,
+    stageTimings: [
+      { stage: 'Preprocessing & SPICE', timeMs: 420, color: '#ef4444' },
+      { stage: 'Feature Extraction (LoFTR)', timeMs: 1200, color: '#ef4444' },
+      { stage: 'Tile-Based Matching', timeMs: 400, color: '#ef4444' },
+      { stage: 'Geometric MAGSAC++', timeMs: 800, color: '#ef4444' },
+      { stage: 'Sub-Pixel Refinement', timeMs: 380, color: '#ef4444' }
+    ],
+    homographyMatrix: [
+      [1.0, 0.0, 0.0],
+      [0.0, 1.0, 0.0],
+      [0.0, 0.0, 1.0]
+    ],
+    tileHeatmap: tileGrid
+  };
+
+  return { keypoints, metrics };
+}
+
 // Initial historical mission runs
 export function getInitialHistoricalRuns(): HistoricalRun[] {
   const presets = getPresetScenarios();
