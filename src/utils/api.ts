@@ -1,6 +1,11 @@
 import type { ImageMetadata, RegistrationMetrics, KeypointMatch } from '../types/registration';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = (
+  import.meta.env.VITE_API_URL || 
+  import.meta.env.VITE_BACKEND_URL || 
+  import.meta.env.VITE_AWS_API_URL || 
+  'http://localhost:8000'
+).replace(/\/$/, '');
 
 async function urlToFile(url: string, filename: string, mimeType: string = 'image/png'): Promise<File> {
   if (url.startsWith('data:')) {
