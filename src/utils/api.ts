@@ -4,7 +4,7 @@ const API_BASE_URL = (
   import.meta.env.VITE_API_URL || 
   import.meta.env.VITE_BACKEND_URL || 
   import.meta.env.VITE_AWS_API_URL || 
-  'http://localhost:8000'
+  (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.origin : 'http://localhost:8000')
 ).replace(/\/$/, '');
 
 async function urlToFile(url: string, filename: string, mimeType: string = 'image/png'): Promise<File> {
