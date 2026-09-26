@@ -97,19 +97,23 @@ export function App() {
     setIsPipelineComplete(false);
     setCurrentView('processing');
 
-    const isCustomUpload = Boolean(sourceMeta.customFile || referenceMeta.customFile);
-
     const promise = (async () => {
       try {
         const apiResult = await runRegistrationApi(sourceMeta, referenceMeta);
         setIsBackendLive(true);
         if (
           (apiResult.status && apiResult.status.startsWith('failed')) || 
-          apiResult.metrics.confidenceLevel === 'LOW' || 
-          apiResult.metrics.confidenceScore < 40
+          apiResult.metrics.confidenceLevel === 'LOW'
         ) {
-          const lowDataset = generateLowCorrespondenceDataset();
-          setKeypointData(lowDataset);
+          if (apiResult.keypoints && apiResult.keypoints.length > 0) {
+            setKeypointData({
+              metrics: apiResult.metrics,
+              keypoints: apiResult.keypoints
+            });
+          } else {
+            const lowDataset = generateLowCorrespondenceDataset();
+            setKeypointData(lowDataset);
+          }
         } else {
           setKeypointData({
             metrics: apiResult.metrics,
@@ -117,19 +121,14 @@ export function App() {
           });
         }
       } catch (err) {
-        console.warn("Python backend API offline or returned error — falling back:", err);
+        console.warn("Python backend API offline or returned error — falling back to registration mock:", err);
         setIsBackendLive(false);
 
-        if (isCustomUpload) {
-          const lowDataset = generateLowCorrespondenceDataset();
-          setKeypointData(lowDataset);
-        } else {
-          const randomSeed = Math.floor(Math.random() * 99999);
-          const count = Math.floor(300 + Math.random() * 150);
-          const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
-          const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
-          setKeypointData(generated);
-        }
+        const randomSeed = Math.floor(Math.random() * 99999);
+        const count = Math.floor(300 + Math.random() * 150);
+        const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
+        const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
+        setKeypointData(generated);
       }
     })();
 

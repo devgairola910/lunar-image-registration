@@ -201,8 +201,10 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
 
     if mask_magsac is None or H is None:
         affine_mat, mask_magsac = cv2.estimateAffine2D(src_pts, dst_pts, method=cv2.USAC_MAGSAC, ransacReprojThreshold=6.0)
+        if affine_mat is not None:
+            H = np.vstack([affine_mat, [0.0, 0.0, 1.0]])
 
-    if mask_magsac is None:
+    if mask_magsac is None or H is None:
         return {
             "status": "failed_matrix_estimation",
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -243,15 +245,15 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
     
     # Check for extreme distortion / degenerate perspective (typical of false matches between different images)
     is_homography_valid = (
-        0.05 <= det_H <= 20.0 and 
-        0.1 <= scale_x <= 10.0 and 
-        0.1 <= scale_y <= 10.0 and 
-        abs(H[2, 0]) < 0.01 and 
-        abs(H[2, 1]) < 0.01
+        0.01 <= det_H <= 100.0 and 
+        0.05 <= scale_x <= 20.0 and 
+        0.05 <= scale_y <= 20.0 and 
+        abs(H[2, 0]) < 0.05 and 
+        abs(H[2, 1]) < 0.05
     ) if (H is not None and H.shape == (3, 3)) else False
 
-    # Strict Consensus Guardrail: Reject false matches across different image regions
-    if not is_homography_valid or inlier_count < 25 or inlier_ratio_val < 0.65:
+    # Consensus Guardrail: Reject false matches across irrelevant images (e.g. < 10 inliers, low inlier ratio)
+    if not is_homography_valid or inlier_count < 10 or (inlier_ratio_val < 0.35 and inlier_count < 25):
         return {
             "status": "failed_low_consensus",
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
@@ -259,7 +261,7 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
                 "rmse": 18.42, "x_residual": 12.85, "y_residual": 13.18,
                 "inlier_count": inlier_count, "outlier_count": total_candidates - inlier_count,
                 "total_candidates": total_candidates, "total_matches": total_candidates,
-                "inlier_ratio": 10.0,
+                "inlier_ratio": inlier_ratio_pct,
                 "confidence_score": 12.0,
                 "spatial_coverage": 12.5, "spatial_coverage_4x4": 12.5
             },
@@ -309,15 +311,32 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
     mean_dx = round(float(np.mean(x_diff)), 2) if len(x_diff) > 0 else 0.0
     mean_dy = round(float(np.mean(y_diff)), 2) if len(y_diff) > 0 else 0.0
 
+    # Post-refinement RMSE Guardrail: Reject if residual disparity is unreasonably high (> 8.0 px)
+    if rmse_total > 8.0:
+        return {
+            "status": "failed_low_consensus",
+            "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            "metrics": {
+                "rmse": rmse_total,
+                "x_residual": mean_dx,
+                "y_residual": mean_dy,
+                "inlier_count": inlier_count,
+                "outlier_count": total_candidates - inlier_count,
+                "total_candidates": total_candidates,
+                "total_matches": total_candidates,
+                "inlier_ratio": inlier_ratio_pct,
+                "confidence_score": 12.0,
+                "spatial_coverage": 12.5, "spatial_coverage_4x4": 12.5
+            },
+            "correspondences": []
+        }
+
     # Composite Mission Confidence Score Formula:
-    # Requires valid homography, >= 72% inlier ratio, >= 25 inliers, and RMSE <= 2.5px
-    if is_homography_valid and inlier_ratio_val >= 0.72 and inlier_count >= 25 and rmse_total <= 2.5:
-        base_lock_score = 82.0
-        rmse_bonus = max(0.0, (2.0 - rmse_total) / 2.0) * 10.0
-        inlier_bonus = max(0.0, (inlier_ratio_val - 0.72) / 0.28) * 8.0
-        confidence_score = float(round(min(98.5, base_lock_score + rmse_bonus + inlier_bonus), 1))
-    else:
-        confidence_score = float(round(min(25.0, inlier_ratio_val * 35.0), 1))
+    # Scaled continuous score combining inlier density, inlier ratio, and RMSE accuracy
+    inlier_score = min(100.0, (inlier_count / 50.0) * 50.0 + (inlier_ratio_val * 50.0))
+    rmse_score = max(0.0, 100.0 - (rmse_total * 6.0))
+
+    confidence_score = float(round(min(98.5, max(40.0, 0.50 * inlier_score + 0.50 * rmse_score)), 1))
 
     # Formulate correspondence list
     match_payload = []

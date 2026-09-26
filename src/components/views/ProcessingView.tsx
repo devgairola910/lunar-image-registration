@@ -33,7 +33,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Metadata-Aware Preprocessing',
     subtitle: 'SPICE Kernels & Radiometric Normalization',
     description: 'Loading orbital ephemeris, calculating phase angle geometry, and equalizing extreme solar illumination differences.',
-    durationMs: 1400,
+    durationMs: 1750,
     telemetryLogs: [
       'Loading NAIF SPICE kernels: CH2_ORBITER_V04.BSP, CH1_ORBITER_V02.BSP...',
       'Ephemeris sync verified: Coordinate Frame MOON_ME (IAU 2015).',
@@ -46,7 +46,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Modality-Adaptive Feature Matching',
     subtitle: 'LoFTR / SuperPoint Transformer Backbone',
     description: 'Dense multi-scale attention matching robust to cross-sensor spectral and scale variations.',
-    durationMs: 1600,
+    durationMs: 1950,
     telemetryLogs: [
       'Initializing LoFTR-Lunar neural correspondence backbone (PyTorch JIT)...',
       'Multi-scale feature pyramid decomposition (Level 0: 600x600, Level 1: 300x300)...',
@@ -59,7 +59,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Tile-Based Matching for Coverage',
     subtitle: '8x8 Uniform Spatial Grid Partitioning',
     description: 'Partitioning the lunar frame into 64 spatial tiles to enforce uniform keypoint density across shadows.',
-    durationMs: 1300,
+    durationMs: 1600,
     telemetryLogs: [
       'Partitioning image domain into 8x8 spatial tiles (64 regions total)...',
       'Balancing keypoint density: Suppressing crater rim clusters, boosting flat maria...',
@@ -72,7 +72,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Robust Geometric Estimation',
     subtitle: 'MAGSAC++ Epipolar & Homography Optimization',
     description: 'Marginalizing Sample Consensus to eliminate shadow edge outliers and fit precise 3x3 homography.',
-    durationMs: 1500,
+    durationMs: 1950,
     telemetryLogs: [
       'Executing MAGSAC++ robust projective estimator (Max iterations: 2,500)...',
       'Iterative σ-consensus scoring: Inlier threshold dynamic bound = 1.50 px.',
@@ -85,7 +85,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Sub-Pixel Refinement & Scoring',
     subtitle: 'Covariance Fitting & Quality Certification',
     description: 'Parabolic 2D surface interpolation achieving sub-pixel precision and computing final telemetry covariance.',
-    durationMs: 1200,
+    durationMs: 1650,
     telemetryLogs: [
       'Performing 2D parabolic quadratic surface peak interpolation...',
       'Sub-pixel residual error: RMSE X = 0.45 px, RMSE Y = 0.51 px, Total RMSE = 0.68 px.',
@@ -99,11 +99,11 @@ const getCompletedLogs = () => {
   const list: string[] = [];
   STAGES.forEach((stage, idx) => {
     stage.telemetryLogs.forEach(log => {
-      list.push(`[T+${(idx * 1.4 + 0.25).toFixed(2)}s] [${stage.name.split(' ')[0].toUpperCase()}] ${log}`);
+      list.push(`[T+${(idx * 1.75 + 0.35).toFixed(2)}s] [${stage.name.split(' ')[0].toUpperCase()}] ${log}`);
     });
   });
-  list.push(`[T+7.20s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`);
-  list.push(`[T+7.22s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`);
+  list.push(`[T+8.90s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`);
+  list.push(`[T+8.92s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`);
   return list;
 };
 
@@ -505,7 +505,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
             <div
               key={i}
               className={`leading-relaxed animate-fadeIn ${
-                log.includes('complete') || log.includes('COMPLETED') || log.includes('verified') || log.includes('converged') || log.includes('locked')
+                log.includes('ERROR') || log.includes('LOW CONFIDENCE') || log.includes('Irrelevant') || log.includes('WARNING') || log.includes('halted')
+                  ? 'text-telemetry-red font-bold'
+                  : log.includes('complete') || log.includes('COMPLETED') || log.includes('verified') || log.includes('converged') || log.includes('locked')
                   ? 'text-telemetry-green font-semibold'
                   : 'text-regolith-300'
               }`}
