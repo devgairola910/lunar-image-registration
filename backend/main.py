@@ -35,6 +35,13 @@ app.add_middleware(
 )
 
 
+@app.on_event("startup")
+def startup_event():
+    logger.info("Pre-warming AI feature matching models on startup...")
+    get_loftr_model()
+    logger.info("AI models successfully loaded into memory.")
+
+
 @app.get("/")
 def read_root():
     return {
