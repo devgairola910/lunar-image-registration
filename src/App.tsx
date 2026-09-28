@@ -54,6 +54,7 @@ export function App() {
   const [hasResults, setHasResults] = useState(true);
   const [taskRunId, setTaskRunId] = useState<string>(() => `TASK-${Date.now()}`);
   const [isPipelineComplete, setIsPipelineComplete] = useState<boolean>(false);
+  const [isApiPending, setIsApiPending] = useState<boolean>(false);
 
   // Handle Preset Selection
   const handleSelectPreset = (preset: PresetScenario) => {
@@ -95,6 +96,7 @@ export function App() {
   const handleRunRegistration = async () => {
     setTaskRunId(`TASK-${Date.now()}`);
     setIsPipelineComplete(false);
+    setIsApiPending(true);
     setCurrentView('processing');
 
     const promise = (async () => {
@@ -129,6 +131,8 @@ export function App() {
         const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
         const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
         setKeypointData(generated);
+      } finally {
+        setIsApiPending(false);
       }
     })();
 
@@ -238,6 +242,7 @@ export function App() {
             taskRunId={taskRunId}
             isAlreadyCompleted={isPipelineComplete}
             onMarkCompleted={() => setIsPipelineComplete(true)}
+            isApiPending={isApiPending}
           />
         )}
 

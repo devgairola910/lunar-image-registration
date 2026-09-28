@@ -25,6 +25,7 @@ interface ProcessingViewProps {
   taskRunId?: string;
   isAlreadyCompleted?: boolean;
   onMarkCompleted?: () => void;
+  isApiPending?: boolean;
 }
 
 const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
@@ -33,7 +34,7 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Metadata-Aware Preprocessing',
     subtitle: 'SPICE Kernels & Radiometric Normalization',
     description: 'Loading orbital ephemeris, calculating phase angle geometry, and equalizing extreme solar illumination differences.',
-    durationMs: 1750,
+    durationMs: 1200,
     telemetryLogs: [
       'Loading NAIF SPICE kernels: CH2_ORBITER_V04.BSP, CH1_ORBITER_V02.BSP...',
       'Ephemeris sync verified: Coordinate Frame MOON_ME (IAU 2015).',
@@ -46,12 +47,12 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Modality-Adaptive Feature Matching',
     subtitle: 'LoFTR / SuperPoint Transformer Backbone',
     description: 'Dense multi-scale attention matching robust to cross-sensor spectral and scale variations.',
-    durationMs: 1950,
+    durationMs: 1400,
     telemetryLogs: [
       'Initializing LoFTR-Lunar neural correspondence backbone (PyTorch JIT)...',
       'Multi-scale feature pyramid decomposition (Level 0: 600x600, Level 1: 300x300)...',
-      'Extracted 1,420 raw candidate keypoint pairs across detector planes.',
-      'Mutual nearest-neighbor cross-check applied. Initial matches: 412 pairs.'
+      'Extracted candidate keypoint pairs across detector planes.',
+      'Mutual nearest-neighbor cross-check applied.'
     ]
   },
   {
@@ -59,12 +60,11 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Tile-Based Matching for Coverage',
     subtitle: '8x8 Uniform Spatial Grid Partitioning',
     description: 'Partitioning the lunar frame into 64 spatial tiles to enforce uniform keypoint density across shadows.',
-    durationMs: 1600,
+    durationMs: 1200,
     telemetryLogs: [
       'Partitioning image domain into 8x8 spatial tiles (64 regions total)...',
       'Balancing keypoint density: Suppressing crater rim clusters, boosting flat maria...',
-      'Spatial coverage evaluated: 60 of 64 tiles populated with valid candidates.',
-      'Uniform spatial distribution verified: 93.8% tile coverage.'
+      'Spatial coverage evaluated across populated candidate regions.'
     ]
   },
   {
@@ -72,12 +72,11 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Robust Geometric Estimation',
     subtitle: 'MAGSAC++ Epipolar & Homography Optimization',
     description: 'Marginalizing Sample Consensus to eliminate shadow edge outliers and fit precise 3x3 homography.',
-    durationMs: 1950,
+    durationMs: 1400,
     telemetryLogs: [
       'Executing MAGSAC++ robust projective estimator (Max iterations: 2,500)...',
       'Iterative σ-consensus scoring: Inlier threshold dynamic bound = 1.50 px.',
-      'Filtering shadow-displacement artifacts & crater-wall geometric parallax...',
-      'MAGSAC++ converged in 1,840 iterations: 360 Inliers, 52 Outliers rejected (87.4% inliers).'
+      'Filtering shadow-displacement artifacts & crater-wall geometric parallax...'
     ]
   },
   {
@@ -85,12 +84,10 @@ const STAGES: Omit<PipelineStageInfo, 'status'>[] = [
     name: 'Sub-Pixel Refinement & Scoring',
     subtitle: 'Covariance Fitting & Quality Certification',
     description: 'Parabolic 2D surface interpolation achieving sub-pixel precision and computing final telemetry covariance.',
-    durationMs: 1650,
+    durationMs: 1200,
     telemetryLogs: [
       'Performing 2D parabolic quadratic surface peak interpolation...',
-      'Sub-pixel residual error: RMSE X = 0.45 px, RMSE Y = 0.51 px, Total RMSE = 0.68 px.',
-      'Confidence Matrix evaluation: Grade = OPTIMAL LOCK (96.2%).',
-      'Registration sequence certified. Outputting georeferenced transformation matrix.'
+      'Evaluating residual errors and mission confidence matrix...'
     ]
   }
 ];
@@ -99,11 +96,11 @@ const getCompletedLogs = () => {
   const list: string[] = [];
   STAGES.forEach((stage, idx) => {
     stage.telemetryLogs.forEach(log => {
-      list.push(`[T+${(idx * 1.75 + 0.35).toFixed(2)}s] [${stage.name.split(' ')[0].toUpperCase()}] ${log}`);
+      list.push(`[T+${(idx * 1.2 + 0.25).toFixed(2)}s] [${stage.name.split(' ')[0].toUpperCase()}] ${log}`);
     });
   });
-  list.push(`[T+8.90s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`);
-  list.push(`[T+8.92s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`);
+  list.push(`[T+6.20s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`);
+  list.push(`[T+6.22s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`);
   return list;
 };
 
@@ -115,7 +112,8 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
   metrics,
   taskRunId,
   isAlreadyCompleted = false,
-  onMarkCompleted
+  onMarkCompleted,
+  isApiPending = false
 }) => {
   const [currentStageIdx, setCurrentStageIdx] = useState(() => isAlreadyCompleted ? STAGES.length : 0);
   const [stageProgress, setStageProgress] = useState(() => isAlreadyCompleted ? 100 : 0);
@@ -135,7 +133,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     onMarkCompletedRef.current = onMarkCompleted;
   }, [onMarkCompleted]);
 
-  // Auto-scroll terminal container internally without scrolling the main window
+  // Auto-scroll terminal container internally
   useEffect(() => {
     if (terminalContainerRef.current) {
       terminalContainerRef.current.scrollTop = terminalContainerRef.current.scrollHeight;
@@ -150,32 +148,50 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     )
   );
 
-  // Immediate RED Halt Effect: Whenever low correspondence is detected from the API
+  // Synchronize API resolution with animation completion:
   useEffect(() => {
-    if (isLowConfidence) {
-      setIsFinished(true);
-      setCurrentStageIdx(STAGES.length);
-      setStageProgress(100);
-      onResultsReadyRef.current?.();
-      onMarkCompletedRef.current?.();
-      setLogs(prev => {
-        if (prev.some(l => l.includes('Irrelevant or low-correspondence'))) return prev;
-        const elapsedSec = startTimeRef.current > 0 ? ((Date.now() - startTimeRef.current) / 1000).toFixed(2) : '0.50';
-        return [
-          ...prev,
-          `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
-          `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
-          `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
-        ];
-      });
+    if (!isApiPending && startTimeRef.current > 0 && !isFinished) {
+      if (isLowConfidence) {
+        // Real API returned low-correspondence: Halt immediately in RED
+        setIsFinished(true);
+        setCurrentStageIdx(STAGES.length);
+        setStageProgress(100);
+        onResultsReadyRef.current?.();
+        onMarkCompletedRef.current?.();
+        setLogs(prev => {
+          if (prev.some(l => l.includes('Irrelevant or low-correspondence'))) return prev;
+          const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+          return [
+            ...prev,
+            `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
+            `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
+            `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
+          ];
+        });
+      } else if (metrics && metrics.confidenceScore >= 45) {
+        // Real API returned successful high-confidence lock
+        setIsFinished(true);
+        setCurrentStageIdx(STAGES.length);
+        setStageProgress(100);
+        onResultsReadyRef.current?.();
+        onMarkCompletedRef.current?.();
+        setLogs(prev => {
+          if (prev.some(l => l.includes('ALL 5 PIPELINE STAGES COMPLETED'))) return prev;
+          const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+          return [
+            ...prev,
+            `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
+            `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
+          ];
+        });
+      }
     }
-  }, [isLowConfidence, metrics]);
+  }, [isApiPending, isLowConfidence, metrics, isFinished]);
 
   // Main Pipeline Step Execution Engine - Runs once per unique taskRunId
   useEffect(() => {
     const currentTaskId = taskRunId || 'DEFAULT_TASK';
 
-    // If already marked as completed or already animated in this session, do not repeat!
     if (isAlreadyCompleted || executedTasksRef.current.has(currentTaskId)) {
       setIsFinished(true);
       setCurrentStageIdx(STAGES.length);
@@ -194,35 +210,20 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     let progressInterval: ReturnType<typeof setInterval>;
 
     const runStage = (stageIdx: number) => {
-      // If low confidence is detected at any point, stop further green progression!
-      if (isLowConfidence) {
-        setIsFinished(true);
-        setCurrentStageIdx(STAGES.length);
-        setStageProgress(100);
+      // Hold on the 4th/5th stage while real API request is in-flight!
+      if (stageIdx >= STAGES.length - 1 && isApiPending) {
+        setCurrentStageIdx(STAGES.length - 1);
+        setStageProgress(90);
         return;
       }
 
       if (stageIdx >= STAGES.length) {
-        setIsFinished(true);
-        setCurrentStageIdx(STAGES.length);
-        setStageProgress(100);
-        onResultsReadyRef.current?.();
-        onMarkCompletedRef.current?.();
-        const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
-        
-        if (isLowConfidence) {
-          setLogs(prev => [
-            ...prev,
-            `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
-            `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
-            `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
-          ]);
-        } else {
-          setLogs(prev => [
-            ...prev,
-            `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
-            `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
-          ]);
+        if (!isApiPending) {
+          setIsFinished(true);
+          setCurrentStageIdx(STAGES.length);
+          setStageProgress(100);
+          onResultsReadyRef.current?.();
+          onMarkCompletedRef.current?.();
         }
         return;
       }
@@ -262,7 +263,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       clearTimeout(timer);
       clearInterval(progressInterval);
     };
-  }, [taskRunId, isAlreadyCompleted, isLowConfidence, metrics]);
+  }, [taskRunId, isAlreadyCompleted, isApiPending]);
 
   const handleSkip = () => {
     onResultsReadyRef.current?.();
