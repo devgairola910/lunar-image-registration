@@ -142,7 +142,34 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     }
   }, [logs]);
 
-  const isLowConfidence = metrics.confidenceLevel === 'LOW' || metrics.confidenceScore < 45;
+  const isLowConfidence = Boolean(
+    metrics && (
+      metrics.confidenceLevel === 'LOW' ||
+      (metrics.confidenceScore > 0 && metrics.confidenceScore < 45) ||
+      (metrics as any).status?.startsWith('failed')
+    )
+  );
+
+  // Immediate RED Halt Effect: Whenever low correspondence is detected from the API
+  useEffect(() => {
+    if (isLowConfidence) {
+      setIsFinished(true);
+      setCurrentStageIdx(STAGES.length);
+      setStageProgress(100);
+      onResultsReadyRef.current?.();
+      onMarkCompletedRef.current?.();
+      setLogs(prev => {
+        if (prev.some(l => l.includes('Irrelevant or low-correspondence'))) return prev;
+        const elapsedSec = startTimeRef.current > 0 ? ((Date.now() - startTimeRef.current) / 1000).toFixed(2) : '0.50';
+        return [
+          ...prev,
+          `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
+          `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
+          `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
+        ];
+      });
+    }
+  }, [isLowConfidence, metrics]);
 
   // Main Pipeline Step Execution Engine - Runs once per unique taskRunId
   useEffect(() => {
@@ -167,6 +194,14 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     let progressInterval: ReturnType<typeof setInterval>;
 
     const runStage = (stageIdx: number) => {
+      // If low confidence is detected at any point, stop further green progression!
+      if (isLowConfidence) {
+        setIsFinished(true);
+        setCurrentStageIdx(STAGES.length);
+        setStageProgress(100);
+        return;
+      }
+
       if (stageIdx >= STAGES.length) {
         setIsFinished(true);
         setCurrentStageIdx(STAGES.length);
