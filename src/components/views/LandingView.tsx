@@ -196,12 +196,12 @@ export const LandingView: React.FC<LandingViewProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-full overflow-hidden">
           {presets.map((preset) => (
             <div
               key={preset.id}
               onClick={() => onSelectPreset(preset)}
-              className="group relative cursor-pointer rounded-2xl p-6 gov-card hover:gov-card-accent border border-white/15 hover:border-earth-400/50 transition-all duration-300 flex flex-col justify-between shadow-xl"
+              className="group relative cursor-pointer rounded-2xl p-6 gov-card hover:gov-card-accent border border-white/15 hover:border-earth-400/50 transition-all duration-300 flex flex-col justify-between shadow-xl max-w-full overflow-hidden"
             >
               <div className="space-y-4">
                 {/* Header Tag */}

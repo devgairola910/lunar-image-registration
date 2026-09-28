@@ -189,7 +189,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-obsidian-950 text-slate-100 flex flex-col relative selection:bg-white/20 selection:text-white">
+    <div className="min-h-screen bg-obsidian-950 text-slate-100 flex flex-col relative selection:bg-white/20 selection:text-white overflow-x-hidden">
       {/* Background Spacecraft Orbital Imagery & Starfield */}
       <Background />
 
@@ -205,7 +205,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 z-10 px-4 sm:px-6 lg:px-8 pt-6">
+      <main className="flex-1 z-10 px-4 sm:px-6 lg:px-8 pt-6 w-full max-w-full overflow-x-hidden">
         {currentView === 'landing' && (
           <LandingView
             onStartRegistration={() => setCurrentView('upload')}

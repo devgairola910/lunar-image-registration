@@ -153,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 shadow-2xl z-50">
+            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 shadow-2xl z-50 overflow-hidden">
               <div className="text-[10px] font-mono text-regolith-300 px-2 py-1.5 uppercase tracking-wider border-b border-white/10 mb-1.5 flex items-center justify-between">
                 <span>Verified Orbital Baselines</span>
                 <span className="text-earth-400 font-semibold">3 PRESETS</span>

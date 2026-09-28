@@ -121,15 +121,15 @@ export const UploadView: React.FC<UploadViewProps> = ({
   const isReadyToRun = Boolean(sourceMeta.previewUrl && referenceMeta.previewUrl) && isMetadataValid;
 
   return (
-    <div className="space-y-8 pb-16 max-w-7xl mx-auto">
+    <div className="space-y-8 pb-16 max-w-7xl mx-auto w-full overflow-x-hidden">
       {/* Top Section: Title and Preset Quick-Select */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 sm:p-6 rounded-2xl mission-card border border-white/15 backdrop-blur-2xl shadow-xl w-full max-w-full overflow-hidden">
         <div>
           <div className="text-regolith-300 font-mono text-xs uppercase tracking-wider mb-1 font-semibold">
             SENSOR INGESTION CONSOLE
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white font-display">
-            Optical Sensor Frames & Metadata
+            Optical Sensor Frames &amp; Metadata
           </h2>
           <p className="text-xs sm:text-sm text-regolith-200">
             Ingest Chandrayaan-2 moving sensor frames and ISRO baseline reference frames.
@@ -137,7 +137,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
         </div>
 
         {/* Quick Presets Bar */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 max-w-full">
           <span className="text-xs font-mono text-regolith-300 mr-1 font-medium">
             Preload Target:
           </span>
