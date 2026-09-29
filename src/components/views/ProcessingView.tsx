@@ -112,17 +112,21 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
   metrics,
   taskRunId,
   isAlreadyCompleted = false,
-  onMarkCompleted
+  onMarkCompleted,
+  isApiPending = false
 }) => {
   const [currentStageIdx, setCurrentStageIdx] = useState(() => isAlreadyCompleted ? STAGES.length : 0);
   const [stageProgress, setStageProgress] = useState(() => isAlreadyCompleted ? 100 : 0);
   const [isFinished, setIsFinished] = useState(() => isAlreadyCompleted ? true : false);
   const [logs, setLogs] = useState<string[]>(() => isAlreadyCompleted ? getCompletedLogs() : []);
+  const [showNoticePopup, setShowNoticePopup] = useState(false);
+
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(0);
-  const executedTasksRef = useRef<Set<string>>(new Set(isAlreadyCompleted ? [taskRunId || 'INIT'] : []));
   const onResultsReadyRef = useRef(onResultsReady);
   const onMarkCompletedRef = useRef(onMarkCompleted);
+  const isApiPendingRef = useRef(isApiPending);
+  const isFinishedRef = useRef(isFinished);
 
   useEffect(() => {
     onResultsReadyRef.current = onResultsReady;
@@ -132,6 +136,14 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     onMarkCompletedRef.current = onMarkCompleted;
   }, [onMarkCompleted]);
 
+  useEffect(() => {
+    isApiPendingRef.current = isApiPending;
+  }, [isApiPending]);
+
+  useEffect(() => {
+    isFinishedRef.current = isFinished;
+  }, [isFinished]);
+
   // Auto-scroll terminal container internally
   useEffect(() => {
     if (terminalContainerRef.current) {
@@ -139,26 +151,36 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     }
   }, [logs]);
 
+  // 40-Second AWS Credit Budget Popup Notice Timer (Triggers once per session)
+  useEffect(() => {
+    if (isAlreadyCompleted || isFinished) return;
+
+    const popupTimer = setTimeout(() => {
+      if (!isFinishedRef.current && sessionStorage.getItem('aws_credit_popup_dismissed') !== 'true') {
+        setShowNoticePopup(true);
+      }
+    }, 40000);
+
+    return () => clearTimeout(popupTimer);
+  }, [taskRunId, isAlreadyCompleted, isFinished]);
+
   const isLowConfidence = Boolean(
     metrics && (
       metrics.confidenceLevel === 'LOW' ||
-      (metrics.confidenceScore > 0 && metrics.confidenceScore < 45) ||
+      (metrics.confidenceScore >= 0 && metrics.confidenceScore < 50) ||
       (metrics as any).status?.startsWith('failed')
     )
   );
 
-  // Main Pipeline Step Execution Engine - Runs once per unique taskRunId
+  // Main Pipeline Step Execution Engine - Synchronized with real backend API
   useEffect(() => {
-    const currentTaskId = taskRunId || 'DEFAULT_TASK';
-
-    if (isAlreadyCompleted || executedTasksRef.current.has(currentTaskId)) {
+    if (isAlreadyCompleted) {
       setIsFinished(true);
       setCurrentStageIdx(STAGES.length);
       setStageProgress(100);
       return;
     }
 
-    executedTasksRef.current.add(currentTaskId);
     startTimeRef.current = Date.now();
     setCurrentStageIdx(0);
     setStageProgress(0);
@@ -167,31 +189,54 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
 
     let timer: ReturnType<typeof setTimeout>;
     let progressInterval: ReturnType<typeof setInterval>;
+    let waitingLogged = false;
+
+    const finishPipeline = () => {
+      setIsFinished(true);
+      setCurrentStageIdx(STAGES.length);
+      setStageProgress(100);
+      onResultsReadyRef.current?.();
+      onMarkCompletedRef.current?.();
+      const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+      
+      const isLow = Boolean(
+        metrics && (
+          metrics.confidenceLevel === 'LOW' ||
+          (metrics.confidenceScore >= 0 && metrics.confidenceScore < 50) ||
+          (metrics as any).status?.startsWith('failed')
+        )
+      );
+
+      if (isLow) {
+        setLogs(prev => [
+          ...prev,
+          `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
+          `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${(metrics?.inlierRatio || 0).toFixed(1)}%).`,
+          `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${(metrics?.confidenceScore || 0).toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
+        ]);
+      } else {
+        setLogs(prev => [
+          ...prev,
+          `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
+          `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
+        ]);
+      }
+    };
 
     const runStage = (stageIdx: number) => {
-      // Complete after full 8.5 seconds (all 5 stages complete)
+      // Stage 5 (last stage) completion logic: Must wait for API response if pending
       if (stageIdx >= STAGES.length) {
-        setIsFinished(true);
-        setCurrentStageIdx(STAGES.length);
-        setStageProgress(100);
-        onResultsReadyRef.current?.();
-        onMarkCompletedRef.current?.();
-        const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
-        
-        if (isLowConfidence) {
-          setLogs(prev => [
-            ...prev,
-            `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
-            `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${metrics.inlierRatio.toFixed(1)}%).`,
-            `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${metrics.confidenceScore.toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
-          ]);
-        } else {
-          setLogs(prev => [
-            ...prev,
-            `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
-            `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
-          ]);
+        if (isApiPendingRef.current) {
+          if (!waitingLogged) {
+            waitingLogged = true;
+            const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+            setLogs(prev => [...prev, `[T+${elapsedSec}s] [SYS] Awaiting PyTorch LoFTR / MAGSAC++ neural tensor response from AWS EC2 node...`]);
+          }
+          // Poll every 250ms until API completes
+          timer = setTimeout(() => runStage(STAGES.length), 250);
+          return;
         }
+        finishPipeline();
         return;
       }
 
@@ -230,7 +275,41 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       clearTimeout(timer);
       clearInterval(progressInterval);
     };
-  }, [taskRunId, isAlreadyCompleted, isLowConfidence, metrics]);
+  }, [taskRunId, isAlreadyCompleted]);
+
+  // Trigger completion if API completes while waiting on final stage
+  useEffect(() => {
+    if (!isApiPending && currentStageIdx >= STAGES.length && !isFinished) {
+      const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
+      setIsFinished(true);
+      setStageProgress(100);
+      onResultsReadyRef.current?.();
+      onMarkCompletedRef.current?.();
+
+      const isLow = Boolean(
+        metrics && (
+          metrics.confidenceLevel === 'LOW' ||
+          (metrics.confidenceScore >= 0 && metrics.confidenceScore < 50) ||
+          (metrics as any).status?.startsWith('failed')
+        )
+      );
+
+      if (isLow) {
+        setLogs(prev => [
+          ...prev,
+          `[T+${elapsedSec}s] [ERROR] Irrelevant or low-correspondence image pair detected!`,
+          `[T+${elapsedSec}s] [WARNING] MAGSAC++ inlier ratio dropped below bound (${(metrics?.inlierRatio || 0).toFixed(1)}%).`,
+          `[T+${elapsedSec}s] [STATUS] Pipeline halted with LOW CONFIDENCE lock (${(metrics?.confidenceScore || 0).toFixed(1)}%). Click 'View Results Telemetry' for error analysis.`
+        ]);
+      } else {
+        setLogs(prev => [
+          ...prev,
+          `[T+${elapsedSec}s] [SYS] ALL 5 PIPELINE STAGES COMPLETED & CERTIFIED.`,
+          `[T+${elapsedSec}s] [STATUS] Coregistration transformation locked. Click 'View Results Telemetry' to examine correspondences.`
+        ]);
+      }
+    }
+  }, [isApiPending, currentStageIdx, isFinished, metrics]);
 
   const handleSkip = () => {
     onResultsReadyRef.current?.();
@@ -521,6 +600,44 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
           ))}
         </div>
       </ReticleFrame>
+
+      {/* 40-Second AWS Credit Budget Notice Modal (Triggers once per session) */}
+      {showNoticePopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
+          <div className="max-w-md w-full mission-card border border-amber-500/40 rounded-2xl p-6 shadow-2xl space-y-4 font-mono relative">
+            <div className="flex items-center space-x-3 text-amber-400">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <AlertTriangle className="w-6 h-6 text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white font-display">
+                  AWS Backend Infrastructure Notice
+                </h3>
+                <span className="text-[10px] text-amber-400">Resource Optimization Active</span>
+              </div>
+            </div>
+            
+            <p className="text-xs text-regolith-200 leading-relaxed">
+              We are cutting corners with the AWS FastAPI backend instance due to cloud credit budget constraints (running on CPU free tier). Full neural LoFTR + MAGSAC++ inference on high-resolution orbital frames may take extra time. Please bear with us!
+            </p>
+            
+            <div className="p-3 rounded-lg bg-obsidian-950 border border-white/10 text-[11px] text-regolith-400 flex items-center space-x-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400 flex-shrink-0" />
+              <span>Processing continues uninterrupted in the background...</span>
+            </div>
+            
+            <button
+              onClick={() => {
+                sessionStorage.setItem('aws_credit_popup_dismissed', 'true');
+                setShowNoticePopup(false);
+              }}
+              className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-extrabold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-lg hover:scale-[1.02]"
+            >
+              I Understand / Proceed
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
