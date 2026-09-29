@@ -88,11 +88,13 @@ export function App() {
 
   // Update Source metadata
   const handleUpdateSourceMeta = (updated: Partial<ImageMetadata>) => {
+    setActivePresetId('');
     setSourceMeta(prev => ({ ...prev, ...updated }));
   };
 
   // Update Reference metadata
   const handleUpdateRefMeta = (updated: Partial<ImageMetadata>) => {
+    setActivePresetId('');
     setReferenceMeta(prev => ({ ...prev, ...updated }));
   };
 
@@ -108,6 +110,9 @@ export function App() {
     setTaskRunId(`TASK-${Date.now()}`);
     setIsPipelineComplete(false);
     setIsApiPending(true);
+
+    // Reset keypointData to pending low correspondence baseline so stale preset metrics never bleed into new run
+    setKeypointData(generateLowCorrespondenceDataset());
     setCurrentView('processing');
 
     const promise = (async () => {
