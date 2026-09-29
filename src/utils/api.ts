@@ -39,7 +39,7 @@ export interface BackendRegistrationResult {
 export async function checkBackendHealth(): Promise<boolean> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
     const response = await fetch(`${API_BASE_URL}/api/v1/health`, {
       method: 'GET',
       signal: controller.signal
@@ -81,10 +81,19 @@ export async function runRegistrationApi(
   formData.append('source_sensor', sourceMeta.sensorType || 'CH2_OHRC');
   formData.append('reference_sensor', referenceMeta.sensorType || 'CH2_TMC');
 
-  const response = await fetch(`${API_BASE_URL}/api/v1/register`, {
-    method: 'POST',
-    body: formData,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_URL}/api/v1/register`, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

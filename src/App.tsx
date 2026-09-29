@@ -35,9 +35,20 @@ export function App() {
   const [activePresetId, setActivePresetId] = useState<string>('preset_clavius_basin');
   const [isBackendLive, setIsBackendLive] = useState<boolean>(false);
 
-  // Check backend health on startup
+  // Check backend health periodically (every 15s)
   useEffect(() => {
-    checkBackendHealth().then(setIsBackendLive);
+    let isMounted = true;
+    const pollHealth = () => {
+      checkBackendHealth().then(isLive => {
+        if (isMounted) setIsBackendLive(isLive);
+      });
+    };
+    pollHealth();
+    const interval = setInterval(pollHealth, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   // Source & Reference Image Metadata
@@ -123,14 +134,12 @@ export function App() {
           });
         }
       } catch (err) {
-        console.warn("Python backend API offline or returned error — falling back to registration mock:", err);
+        console.warn("Python backend API error or low spatial correspondence — setting low correspondence warning dataset:", err);
         setIsBackendLive(false);
 
-        const randomSeed = Math.floor(Math.random() * 99999);
-        const count = Math.floor(300 + Math.random() * 150);
-        const inlierRatio = parseFloat((0.82 + Math.random() * 0.12).toFixed(2));
-        const generated = generateKeypointDataset(600, 600, count, inlierRatio, randomSeed);
-        setKeypointData(generated);
+        // Fail-safe: Use low-correspondence warning dataset instead of high confidence mock data
+        const lowDataset = generateLowCorrespondenceDataset();
+        setKeypointData(lowDataset);
       } finally {
         setIsApiPending(false);
       }
