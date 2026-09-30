@@ -46,10 +46,14 @@ class KeypointMatchItem(BaseModel):
     tileIndex: int
 
 class RegistrationResponse(BaseModel):
-    status: str = Field(..., description="Registration status: success | failed_low_correspondence | error")
+    status: str = Field(..., description="Registration status: success | FAILED | failed_low_correspondence | error")
     message: Optional[str] = Field(None, description="Detailed message or error details")
+    reason: Optional[str] = Field(None, description="Failure reason description")
     execution_time_seconds: Optional[float] = Field(0.0, description="Total processing time in seconds")
     transformation_matrix: Optional[List[List[float]]] = Field(default_factory=list)
+    transform_type: Optional[str] = Field("tps_thin_plate_spline", description="Transformation model applied: tps_thin_plate_spline | sector_affine | affine_fallback")
+    registered_geotiff_url: Optional[str] = Field(None, description="Relative URL to download registered GeoTIFF file")
+    download_url: Optional[str] = Field(None, description="Download URL for registered GeoTIFF raster")
     metrics: RegistrationMetrics
     match_points: List[List[float]] = Field(default_factory=list, description="List of [src_x, src_y, ref_x, ref_y] scaled to original dimensions")
     keypoints: List[KeypointMatchItem] = Field(default_factory=list, description="Detailed keypoint list for frontend viewer")

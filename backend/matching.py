@@ -1,177 +1,32 @@
 import time
 import logging
 import io
-import ssl
 import numpy as np
 import cv2
 from PIL import Image
 from typing import Tuple, Dict, Any, List, Optional
 import torch
 
+from pipeline import run_registration_pipeline, get_loftr_model, apply_clahe_preprocessing, resize_with_aspect_ratio, compute_tile_heatmap, match_sift_pair
+
 logger = logging.getLogger("chandradrishti.matching")
-
-# Try importing Kornia feature matchers
-LOFTR_AVAILABLE = False
-try:
-    import kornia
-    import kornia.feature as KF
-    LOFTR_AVAILABLE = True
-except Exception as e:
-    logger.warning(f"Kornia feature matching not fully loaded: {e}. Will use OpenCV MAGSAC++ fallback.")
-
-# Global cached LoFTR model
-_loftr_model = None
-
-def get_loftr_model():
-    global _loftr_model, LOFTR_AVAILABLE
-    if not LOFTR_AVAILABLE:
-        return None
-    if _loftr_model is not None:
-        return _loftr_model
-    try:
-        try:
-            ssl._create_default_https_context = ssl._create_unverified_context
-        except Exception:
-            pass
-        logger.info("Initializing Kornia LoFTR (pretrained='outdoor')...")
-        model = KF.LoFTR(pretrained='outdoor').eval()
-        _loftr_model = model
-        return _loftr_model
-    except Exception as e:
-        logger.warning(f"Failed to load LoFTR weights: {e}. Falling back to OpenCV SIFT/MAGSAC++.")
-        return None
-
-
-def resize_with_aspect_ratio(img_np: np.ndarray, max_dim: int = 1200) -> Tuple[np.ndarray, float]:
-    """
-    Image Scaling Guardrail: Resizes input image so its maximum dimension
-    does not exceed max_dim (1200px for push-broom long strips).
-    """
-    h, w = img_np.shape[:2]
-    max_current = max(h, w)
-    if max_current <= max_dim:
-        return img_np, 1.0
-    
-    scale = max_dim / float(max_current)
-    new_w = int(round(w * scale))
-    new_h = int(round(h * scale))
-    
-    resized = cv2.resize(img_np, (new_w, new_h), interpolation=cv2.INTER_AREA)
-    inv_scale = float(max_current) / float(max_dim)
-    return resized, inv_scale
-
-
-def apply_clahe_preprocessing(img_gray: np.ndarray) -> np.ndarray:
-    """
-    Radiometric Preprocessing: Applies CLAHE to normalize contrast
-    across extreme lunar sun angles, shadows, and cross-sensor pairs (OHRC/TMC/IIRS).
-    """
-    if img_gray.dtype != np.uint8:
-        img_gray = (np.clip(img_gray, 0, 1) * 255).astype(np.uint8)
-    
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
-    enhanced = clahe.apply(img_gray)
-    return enhanced
-
-
-def compute_tile_heatmap(
-    src_pts: np.ndarray, 
-    inliers_mask: np.ndarray, 
-    img_width: int, 
-    img_height: int, 
-    grid_size: int = 8
-) -> Tuple[float, List[List[Dict[str, Any]]]]:
-    """
-    Computes a spatial coverage tile grid heatmap (4x4 or 8x8).
-    Returns (coverage_percentage, tile_heatmap_cells).
-    """
-    heatmap = []
-    tile_w = img_width / float(grid_size)
-    tile_h = img_height / float(grid_size)
-    
-    tile_counts = np.zeros((grid_size, grid_size), dtype=int)
-    inlier_counts = np.zeros((grid_size, grid_size), dtype=int)
-    
-    for i, pt in enumerate(src_pts):
-        col = int(min(grid_size - 1, max(0, pt[0] // tile_w)))
-        row = int(min(grid_size - 1, max(0, pt[1] // tile_h)))
-        tile_counts[row, col] += 1
-        if i < len(inliers_mask) and inliers_mask[i]:
-            inlier_counts[row, col] += 1
-            
-    active_tiles = 0
-    max_inliers_in_tile = max(1, np.max(inlier_counts)) if np.max(inlier_counts) > 0 else 1
-
-    for r in range(grid_size):
-        row_cells = []
-        for c in range(grid_size):
-            m_count = int(tile_counts[r, c])
-            i_count = int(inlier_counts[r, c])
-            if i_count > 0:
-                active_tiles += 1
-            density = float(min(1.0, i_count / float(max_inliers_in_tile)))
-            row_cells.append({
-                "row": r,
-                "col": c,
-                "matchCount": m_count,
-                "inlierCount": i_count,
-                "densityScore": round(density, 3)
-            })
-        heatmap.append(row_cells)
-
-    coverage_percentage = round((active_tiles / float(grid_size * grid_size)) * 100.0, 1)
-    return coverage_percentage, heatmap
 
 
 def match_with_opencv_sift(
-    img1_gray: np.ndarray, 
+    img1_gray: np.ndarray,
     img2_gray: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    High-Precision SIFT Feature Matcher: Uses SIFT with BFMatcher Cross-Check and distance limits.
-    """
-    sift = cv2.SIFT_create(nfeatures=2000, contrastThreshold=0.03, edgeThreshold=10)
-    kp1, des1 = sift.detectAndCompute(img1_gray, None)
-    kp2, des2 = sift.detectAndCompute(img2_gray, None)
-    
-    if des1 is None or des2 is None or len(kp1) < 4 or len(kp2) < 4:
-        return np.empty((0, 2)), np.empty((0, 2)), np.empty((0,))
-        
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    raw_matches = bf.match(des1, des2)
-    
-    # Strict descriptor distance filter for SIFT (< 220.0 L2 distance)
-    good_matches = [m for m in raw_matches if m.distance < 220.0]
-    
-    if len(good_matches) < 4:
-        return np.empty((0, 2)), np.empty((0, 2)), np.empty((0,))
-        
-    src_pts = []
-    ref_pts = []
-    confs = []
-    
-    for m in good_matches:
-        src_pts.append(kp1[m.queryIdx].pt)
-        ref_pts.append(kp2[m.trainIdx].pt)
-        conf = float(max(0.0, min(1.0, 1.0 - (m.distance / 250.0))))
-        confs.append(conf)
-        
-    return np.array(src_pts, dtype=np.float32), np.array(ref_pts, dtype=np.float32), np.array(confs, dtype=np.float32)
+    """High-Precision SIFT Feature Matcher."""
+    return match_sift_pair(img1_gray, img2_gray, max_features=2000)
 
 
 def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dict[str, Any]:
-    """
-    Two-Pass Consensus Filter & Push-Broom Kinematic Registration Engine.
-    
-    Pass 1 (Consensus Filtering): MAGSAC++ @ 2.5px tight sub-pixel threshold.
-    
-    Pass 2 (Sub-Pixel Refinement): Multi-sector Push-Broom Affine model achieves 
-    sub-pixel precision and authentic mission confidence scores.
-    """
+    """Legacy registration function preserved for backward compatibility."""
     total_candidates = len(src_pts) if src_pts is not None else 0
     if src_pts is None or dst_pts is None or total_candidates < 4:
         return {
-            "status": "failed_low_correspondence",
+            "status": "FAILED",
+            "reason": "Insufficient inlier ground tie-points",
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
@@ -182,16 +37,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "correspondences": []
         }
 
-    # --------------------------------------------------------------------------
-    # PASS 1: Broad Structural Consensus Filtering (MAGSAC++ @ 2.5px Threshold)
-    # --------------------------------------------------------------------------
     H, mask_magsac = cv2.findHomography(
-        src_pts, 
-        dst_pts, 
-        method=cv2.USAC_MAGSAC, 
-        ransacReprojThreshold=2.5,
-        confidence=0.999,
-        maxIters=10000
+        src_pts, dst_pts, method=cv2.USAC_MAGSAC, ransacReprojThreshold=2.5, confidence=0.999, maxIters=10000
     )
 
     if mask_magsac is None or H is None:
@@ -201,7 +48,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
 
     if mask_magsac is None or H is None:
         return {
-            "status": "failed_matrix_estimation",
+            "status": "FAILED",
+            "reason": "Insufficient inlier ground tie-points",
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
@@ -219,7 +67,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
 
     if inlier_count < 4:
         return {
-            "status": "failed_low_inliers",
+            "status": "FAILED",
+            "reason": "Insufficient inlier ground tie-points",
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
@@ -233,117 +82,27 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
     inlier_ratio_val = float(inlier_count / total_candidates)
     inlier_ratio_pct = round(inlier_ratio_val * 100.0, 1)
 
-    # Homography distortion verification guardrail
-    det_H = abs(float(np.linalg.det(H[:2, :2]))) if (H is not None and H.shape == (3, 3)) else 0.0
-    scale_x = float(np.sqrt(H[0, 0]**2 + H[1, 0]**2)) if (H is not None and H.shape == (3, 3)) else 0.0
-    scale_y = float(np.sqrt(H[0, 1]**2 + H[1, 1]**2)) if (H is not None and H.shape == (3, 3)) else 0.0
-    
-    # Check for extreme distortion / degenerate perspective (typical of false matches between different images)
-    is_homography_valid = (
-        0.05 <= det_H <= 20.0 and 
-        0.10 <= scale_x <= 10.0 and 
-        0.10 <= scale_y <= 10.0 and 
-        abs(H[2, 0]) < 0.02 and 
-        abs(H[2, 1]) < 0.02
-    ) if (H is not None and H.shape == (3, 3)) else False
+    M_affine, _ = cv2.estimateAffine2D(inliers_src, inliers_dst, method=cv2.LMEDS)
+    if M_affine is None:
+        M_affine = np.float32([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
 
-    # Consensus Guardrail: Require minimum 12 true inliers and at least 35% inlier ratio under 2.5px RANSAC bound
-    if not is_homography_valid or inlier_count < 12 or inlier_ratio_val < 0.35:
-        return {
-            "status": "failed_low_correspondence",
-            "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-            "metrics": {
-                "rmse": 18.42, "x_residual": 12.85, "y_residual": 13.18,
-                "inlier_count": 0, "outlier_count": total_candidates,
-                "total_candidates": total_candidates, "total_matches": total_candidates,
-                "inlier_ratio": 0.0,
-                "confidence_score": 0.0,
-                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
-            },
-            "correspondences": []
-        }
-
-    # --------------------------------------------------------------------------
-    # PASS 2: Sub-Pixel Multi-Sector Push-Broom Affine Model Refinement
-    # (Absorbs along-track camera jitter and calculates sub-pixel RMSE)
-    # --------------------------------------------------------------------------
-    max_y = max(np.max(inliers_src[:, 1]), np.max(inliers_dst[:, 1]))
-    num_sectors = 10 if max_y > 3000 else 6
-    sector_h = max_y / float(num_sectors)
-
-    projected_dst = np.zeros_like(inliers_dst)
-    sector_matrices = []
-
-    for sec in range(num_sectors):
-        y_min = sec * sector_h - 200
-        y_max = (sec + 1) * sector_h + 200
-        idx = np.where((inliers_src[:, 1] >= y_min) & (inliers_src[:, 1] <= y_max))[0]
-
-        if len(idx) >= 4:
-            s0, s1 = inliers_src[idx], inliers_dst[idx]
-            M, _ = cv2.estimateAffine2D(s0, s1, method=cv2.LMEDS)
-            if M is None:
-                M, _ = cv2.estimateAffinePartial2D(s0, s1, method=cv2.RANSAC)
-            if M is not None:
-                projected_dst[idx] = (M @ np.hstack([s0, np.ones((len(s0), 1))]).T).T
-                sector_matrices.append(M.tolist())
-
-    # Fallback for unprojected points using global affine
-    unproj_idx = np.where(np.sum(projected_dst, axis=1) == 0)[0]
-    if len(unproj_idx) > 0:
-        M_glob, _ = cv2.estimateAffine2D(inliers_src, inliers_dst, method=cv2.LMEDS)
-        if M_glob is not None:
-            proj_unproj = (M_glob @ np.hstack([inliers_src[unproj_idx], np.ones((len(unproj_idx), 1))]).T).T
-            projected_dst[unproj_idx] = proj_unproj
-            if len(sector_matrices) == 0:
-                sector_matrices.append(M_glob.tolist())
-
-    x_diff = np.abs(inliers_dst[:, 0] - projected_dst[:, 0])
-    y_diff = np.abs(inliers_dst[:, 1] - projected_dst[:, 1])
+    pred_dst = (M_affine @ np.hstack([inliers_src, np.ones((inlier_count, 1))]).T).T
+    x_diff = np.abs(inliers_dst[:, 0] - pred_dst[:, 0])
+    y_diff = np.abs(inliers_dst[:, 1] - pred_dst[:, 1])
     residuals = np.sqrt(x_diff**2 + y_diff**2)
 
     rmse_total = round(float(np.sqrt(np.mean(residuals**2))), 2) if len(residuals) > 0 else 0.0
     mean_dx = round(float(np.mean(x_diff)), 2) if len(x_diff) > 0 else 0.0
     mean_dy = round(float(np.mean(y_diff)), 2) if len(y_diff) > 0 else 0.0
 
-    # Post-refinement RMSE Guardrail: Reject if residual disparity is unreasonably high (> 8.0 px)
-    if rmse_total > 8.0:
-        return {
-            "status": "failed_low_consensus",
-            "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-            "metrics": {
-                "rmse": rmse_total,
-                "x_residual": mean_dx,
-                "y_residual": mean_dy,
-                "inlier_count": inlier_count,
-                "outlier_count": total_candidates - inlier_count,
-                "total_candidates": total_candidates,
-                "total_matches": total_candidates,
-                "inlier_ratio": inlier_ratio_pct,
-                "confidence_score": 12.0,
-                "spatial_coverage": 12.5, "spatial_coverage_4x4": 12.5
-            },
-            "correspondences": []
-        }
-
-    # Composite Mission Confidence Score Formula:
-    # Scaled continuous score combining inlier density, inlier ratio, and RMSE accuracy
     inlier_score = min(100.0, (inlier_count / 50.0) * 50.0 + (inlier_ratio_val * 50.0))
     rmse_score = max(0.0, 100.0 - (rmse_total * 6.0))
+    confidence_score = float(round(max(0.0, min(100.0, 0.50 * inlier_score + 0.50 * rmse_score)), 1))
 
-    confidence_score = float(round(min(98.5, max(40.0, 0.50 * inlier_score + 0.50 * rmse_score)), 1))
-
-    # Formulate correspondence list
     match_payload = []
-    inlier_counter = 0
     for idx in range(total_candidates):
         is_inlier = bool(inlier_mask[idx])
-        if is_inlier and inlier_counter < len(residuals):
-            res = float(residuals[inlier_counter])
-            inlier_counter += 1
-        else:
-            res = 6.5
-
+        res = float(residuals[idx]) if is_inlier and idx < len(residuals) else 6.5
         match_payload.append({
             "id": f"#{idx+1:04d}",
             "src": [round(float(src_pts[idx][0]), 2), round(float(src_pts[idx][1]), 2)],
@@ -353,11 +112,9 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
             "classification": "INLIER" if is_inlier else "OUTLIER"
         })
 
-    primary_matrix = sector_matrices[0] if len(sector_matrices) > 0 else [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]
-
     return {
         "status": "success",
-        "transformation_matrix": primary_matrix,
+        "transformation_matrix": M_affine.tolist(),
         "metrics": {
             "rmse": rmse_total,
             "x_residual": mean_dx,
@@ -373,218 +130,8 @@ def compute_robust_registration(src_pts: np.ndarray, dst_pts: np.ndarray) -> Dic
     }
 
 
-def match_lunar_images(source_bytes: bytes, reference_bytes: bytes) -> Dict[str, Any]:
+def match_lunar_images(source_bytes: bytes, reference_bytes: bytes, mode: str = "fast") -> Dict[str, Any]:
     """
-    Main image registration pipeline for ISRO Chandrayaan optical images.
+    Main image registration entry point. Delegates to full ChandraDrishti pipeline.
     """
-    t_start = time.time()
-    
-    try:
-        # Step 1: Decode Images
-        src_pil = Image.open(io.BytesIO(source_bytes)).convert("L")
-        ref_pil = Image.open(io.BytesIO(reference_bytes)).convert("L")
-        
-        orig_w_src, orig_h_src = src_pil.size
-        orig_w_ref, orig_h_ref = ref_pil.size
-        
-        src_np = np.array(src_pil)
-        ref_np = np.array(ref_pil)
-        
-        # Step 2: Scaling Guardrail (Max 1200px)
-        src_resized, scale_src = resize_with_aspect_ratio(src_np, max_dim=1200)
-        ref_resized, scale_ref = resize_with_aspect_ratio(ref_np, max_dim=1200)
-        
-        # Step 3: Radiometric Equalization (CLAHE)
-        src_enhanced = apply_clahe_preprocessing(src_resized)
-        ref_enhanced = apply_clahe_preprocessing(ref_resized)
-        
-        # Step 4: Feature Matching (High-Precision SIFT or LoFTR)
-        src_pts_res, ref_pts_res, confidences = match_with_opencv_sift(src_enhanced, ref_enhanced)
-        
-        if len(src_pts_res) < 4:
-            loftr = get_loftr_model()
-            if loftr is not None:
-                try:
-                    t_src = torch.from_numpy(src_enhanced).float().unsqueeze(0).unsqueeze(0) / 255.0
-                    t_ref = torch.from_numpy(ref_enhanced).float().unsqueeze(0).unsqueeze(0) / 255.0
-                    with torch.no_grad():
-                        res_loftr = loftr({"image0": t_src, "image1": t_ref})
-                    pts0 = res_loftr["keypoints0"].cpu().numpy()
-                    pts1 = res_loftr["keypoints1"].cpu().numpy()
-                    confs = res_loftr["confidence"].cpu().numpy()
-                    valid_c = confs >= 0.35
-                    if np.sum(valid_c) >= 4:
-                        src_pts_res = pts0[valid_c]
-                        ref_pts_res = pts1[valid_c]
-                        confidences = confs[valid_c]
-                except Exception as e:
-                    logger.warning(f"LoFTR fallback error: {e}")
-
-        total_matches = len(src_pts_res) if src_pts_res is not None else 0
-        
-        if total_matches < 4:
-            t_elapsed = round(time.time() - t_start, 3)
-            return {
-                "status": "failed_low_correspondence",
-                "message": f"Detected only {total_matches} candidate keypoints (minimum 4 required).",
-                "execution_time_seconds": t_elapsed,
-                "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-                "metrics": {
-                    "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
-                    "inlier_count": 0, "outlier_count": total_matches,
-                    "total_candidates": total_matches, "total_matches": total_matches, "inlier_ratio": 0.0, "confidence_score": 0.0,
-                    "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0,
-                    "homography_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-                    "tile_heatmap": []
-                },
-                "match_points": [],
-                "keypoints": [],
-                "correspondences": [],
-                "source_image_info": {"width": orig_w_src, "height": orig_h_src},
-                "reference_image_info": {"width": orig_w_ref, "height": orig_h_ref}
-            }
-
-        # Scale keypoints to original dimensions
-        src_pts_orig = src_pts_res * scale_src
-        ref_pts_orig = ref_pts_res * scale_ref
-
-        # Run Two-Pass Consensus & Push-Broom Kinematic Registration Engine
-        reg_result = compute_robust_registration(src_pts_orig, ref_pts_orig)
-
-        # Photometric Structural Correlation Guardrail (NCC): Verify actual surface structural correlation
-        if reg_result["status"] == "success":
-            H_mat = np.array(reg_result["transformation_matrix"], dtype=np.float32)
-            if H_mat.shape == (2, 3):
-                H_mat = np.vstack([H_mat, [0.0, 0.0, 1.0]])
-            if H_mat.shape == (3, 3):
-                warped_src = cv2.warpPerspective(src_enhanced, H_mat, (ref_enhanced.shape[1], ref_enhanced.shape[0]))
-                valid_mask = (warped_src > 15) & (ref_enhanced > 15)
-                if np.sum(valid_mask) > 1000:
-                    w1 = warped_src[valid_mask].astype(float)
-                    w2 = ref_enhanced[valid_mask].astype(float)
-                    w1_norm = (w1 - np.mean(w1)) / (np.std(w1) + 1e-5)
-                    w2_norm = (w2 - np.mean(w2)) / (np.std(w2) + 1e-5)
-                    ncc_val = float(np.mean(w1_norm * w2_norm))
-                else:
-                    ncc_val = 0.0
-
-                if ncc_val < 0.25:
-                    reg_result = {
-                        "status": "failed_low_correspondence",
-                        "message": f"Photometric structural correlation check failed (NCC={ncc_val:.3f} < 0.25). Images do not spatially overlap.",
-                        "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-                        "metrics": {
-                            "rmse": 18.42, "x_residual": 12.85, "y_residual": 13.18,
-                            "inlier_count": 0, "outlier_count": total_matches,
-                            "total_candidates": total_matches, "total_matches": total_matches,
-                            "inlier_ratio": 0.0, "confidence_score": 0.0,
-                            "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
-                        },
-                        "correspondences": []
-                    }
-
-        if reg_result["status"] != "success":
-            t_elapsed = round(time.time() - t_start, 3)
-            return {
-                "status": reg_result["status"],
-                "message": reg_result.get("message", "Registration model estimation failed due to low spatial correspondence."),
-                "execution_time_seconds": t_elapsed,
-                "transformation_matrix": reg_result.get("transformation_matrix", [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]),
-                "metrics": reg_result["metrics"],
-                "match_points": [],
-                "keypoints": [],
-                "correspondences": [],
-                "source_image_info": {"width": orig_w_src, "height": orig_h_src},
-                "reference_image_info": {"width": orig_w_ref, "height": orig_h_ref}
-            }
-
-        inliers_mask = reg_result.get("inliers_mask", np.ones(total_matches, dtype=bool))
-
-        # Spatial tile coverage (4x4 and 8x8 grid on source image)
-        coverage_pct_4x4, tile_heatmap_4x4 = compute_tile_heatmap(
-            src_pts_orig, inliers_mask, orig_w_src, orig_h_src, grid_size=4
-        )
-        coverage_pct_8x8, tile_heatmap_8x8 = compute_tile_heatmap(
-            src_pts_orig, inliers_mask, orig_w_src, orig_h_src, grid_size=8
-        )
-
-        metrics = reg_result["metrics"]
-        metrics["total_matches"] = total_matches
-        metrics["spatial_coverage"] = coverage_pct_8x8
-        metrics["spatial_coverage_4x4"] = coverage_pct_4x4
-        metrics["homography_matrix"] = reg_result["transformation_matrix"]
-        metrics["tile_heatmap"] = tile_heatmap_8x8
-        metrics["tile_heatmap_4x4"] = tile_heatmap_4x4
-
-        # Format match_points & keypoints array for frontend compatibility
-        match_points = []
-        keypoints_list = []
-        correspondences = reg_result["correspondences"]
-        
-        tile_w = orig_w_src / 8.0
-        tile_h = orig_h_src / 8.0
-
-        for i in range(total_matches):
-            sx, sy = float(src_pts_orig[i, 0]), float(src_pts_orig[i, 1])
-            rx, ry = float(ref_pts_orig[i, 0]), float(ref_pts_orig[i, 1])
-            is_in = bool(inliers_mask[i])
-            
-            if is_in:
-                match_points.append([round(sx, 2), round(sy, 2), round(rx, 2), round(ry, 2)])
-            
-            corr_item = correspondences[i] if i < len(correspondences) else {}
-            res_err = corr_item.get("residual_px", 4.50)
-            conf_val = corr_item.get("confidence", 80.0) / 100.0
-
-            t_col = int(min(7, max(0, sx // tile_w)))
-            t_row = int(min(7, max(0, sy // tile_h)))
-            t_idx = t_row * 8 + t_col
-            
-            keypoints_list.append({
-                "id": i + 1,
-                "srcX": round(sx, 2),
-                "srcY": round(sy, 2),
-                "refX": round(rx, 2),
-                "refY": round(ry, 2),
-                "residualError": res_err,
-                "confidence": round(float(conf_val), 3),
-                "isInlier": is_in,
-                "tileIndex": t_idx
-            })
-
-        t_elapsed = round(time.time() - t_start, 3)
-
-        return {
-            "status": "success",
-            "message": "Multi-modal image correspondence successfully executed.",
-            "execution_time_seconds": t_elapsed,
-            "transformation_matrix": reg_result["transformation_matrix"],
-            "metrics": metrics,
-            "match_points": match_points,
-            "keypoints": keypoints_list,
-            "correspondences": correspondences,
-            "source_image_info": {"width": orig_w_src, "height": orig_h_src},
-            "reference_image_info": {"width": orig_w_ref, "height": orig_h_ref}
-        }
-
-    except Exception as e:
-        logger.error(f"Unhandled error in match_lunar_images pipeline: {e}", exc_info=True)
-        t_elapsed = round(time.time() - t_start, 3)
-        return {
-            "status": "failed_low_correspondence",
-            "message": f"Pipeline processing exception: {str(e)}",
-            "execution_time_seconds": t_elapsed,
-            "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
-            "metrics": {
-                "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
-                "inlier_count": 0, "outlier_count": 0, "total_candidates": 0, "total_matches": 0,
-                "inlier_ratio": 0.0, "confidence_score": 0.0, "spatial_coverage": 0.0,
-                "homography_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-                "tile_heatmap": []
-            },
-            "match_points": [],
-            "keypoints": [],
-            "correspondences": [],
-            "source_image_info": None,
-            "reference_image_info": None
-        }
+    return run_registration_pipeline(source_bytes, reference_bytes, mode=mode, transform_type="tps")

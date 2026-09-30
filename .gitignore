@@ -25,6 +25,11 @@ lerna-debug.log*
 logs/
 *.log
 
+# Outputs & Test archives
+backend/outputs/
+*.tif
+Test.zip
+
 # IDE & OS
 .vscode/
 .idea/
