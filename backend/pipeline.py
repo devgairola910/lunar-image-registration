@@ -67,7 +67,7 @@ def match_sift_pair(
     img2_gray: np.ndarray,
     max_features: int = 2000
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Extracts SIFT features and returns (src_pts, ref_pts, confidences)."""
+    """Extracts SIFT features using Lowe's ratio test and returns (src_pts, ref_pts, confidences)."""
     sift = cv2.SIFT_create(nfeatures=max_features, contrastThreshold=0.03, edgeThreshold=10)
     kp1, des1 = sift.detectAndCompute(img1_gray, None)
     kp2, des2 = sift.detectAndCompute(img2_gray, None)
@@ -75,9 +75,14 @@ def match_sift_pair(
     if des1 is None or des2 is None or len(kp1) < 4 or len(kp2) < 4:
         return np.empty((0, 2)), np.empty((0, 2)), np.empty((0,))
 
-    bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
-    raw_matches = bf.match(des1, des2)
-    good_matches = [m for m in raw_matches if m.distance < 220.0]
+    bf = cv2.BFMatcher(cv2.NORM_L2)
+    raw_matches = bf.knnMatch(des1, des2, k=2)
+    good_matches = []
+    for pair in raw_matches:
+        if len(pair) == 2:
+            m, n = pair
+            if m.distance < 0.78 * n.distance and m.distance < 220.0:
+                good_matches.append(m)
 
     if len(good_matches) < 4:
         return np.empty((0, 2)), np.empty((0, 2)), np.empty((0,))
@@ -338,17 +343,35 @@ def run_registration_pipeline(
     inliers_dst = ref_pts_orig[inlier_mask]
     inlier_count = int(len(inliers_src))
 
-    if inlier_count < 4:
+    inlier_ratio_val = float(inlier_count / total_candidates)
+    inlier_ratio_pct = round(inlier_ratio_val * 100.0, 1)
+
+    # Structural Homography Matrix Sanity Guardrail
+    det_H = abs(float(np.linalg.det(H[:2, :2]))) if (H is not None and H.shape == (3, 3)) else 0.0
+    scale_x = float(np.sqrt(H[0, 0]**2 + H[1, 0]**2)) if (H is not None and H.shape == (3, 3)) else 0.0
+    scale_y = float(np.sqrt(H[0, 1]**2 + H[1, 1]**2)) if (H is not None and H.shape == (3, 3)) else 0.0
+
+    is_homography_valid = (
+        0.05 <= det_H <= 20.0 and 
+        0.10 <= scale_x <= 10.0 and 
+        0.10 <= scale_y <= 10.0 and 
+        abs(H[2, 0]) < 0.02 and 
+        abs(H[2, 1]) < 0.02
+    ) if (H is not None and H.shape == (3, 3)) else False
+
+    # Require minimum 10 true inliers, 25% inlier ratio, and valid homography geometry
+    if not is_homography_valid or inlier_count < 10 or inlier_ratio_val < 0.25:
         t_elapsed = round(time.perf_counter() - t_start, 3)
         return {
             "status": "FAILED",
-            "reason": "Insufficient inlier ground tie-points",
-            "message": f"Inlier consensus filter returned only {inlier_count} inliers.",
+            "reason": "Insufficient inlier ground tie-points or invalid geometric matrix",
+            "message": f"Consensus check failed: inliers={inlier_count}, inlier_ratio={inlier_ratio_pct}%, valid_matrix={is_homography_valid}.",
             "execution_time_seconds": t_elapsed,
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            "transform_type": "failed_low_correspondence",
             "metrics": {
                 "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
-                "inlier_count": inlier_count, "outlier_count": total_candidates - inlier_count,
+                "inlier_count": 0, "outlier_count": total_candidates,
                 "total_candidates": total_candidates, "total_matches": total_candidates,
                 "inlier_ratio": 0.0, "confidence_score": 0.0,
                 "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
@@ -356,8 +379,57 @@ def run_registration_pipeline(
             "correspondences": []
         }
 
-    inlier_ratio_val = float(inlier_count / total_candidates)
-    inlier_ratio_pct = round(inlier_ratio_val * 100.0, 1)
+    # Photometric Structural Correlation Guardrail (Normalized Cross-Correlation & Sobel Edge Alignment)
+    src_resized, _ = resize_with_aspect_ratio(src_np, max_dim=1200)
+    ref_resized, _ = resize_with_aspect_ratio(ref_np, max_dim=1200)
+    src_enhanced = apply_clahe_preprocessing(src_resized)
+    ref_enhanced = apply_clahe_preprocessing(ref_resized)
+
+    # Scale H for preview aspect ratio check
+    scale_matrix = np.diag([ref_enhanced.shape[1] / float(orig_w_ref), ref_enhanced.shape[0] / float(orig_h_ref), 1.0])
+    scale_src_matrix = np.diag([src_enhanced.shape[1] / float(orig_w_src), src_enhanced.shape[0] / float(orig_h_src), 1.0])
+    H_scaled = scale_matrix @ H @ np.linalg.inv(scale_src_matrix)
+
+    warped_preview = cv2.warpPerspective(src_enhanced, H_scaled, (ref_enhanced.shape[1], ref_enhanced.shape[0]))
+    valid_mask = (warped_preview > 15) & (ref_enhanced > 15)
+
+    if np.sum(valid_mask) > 500:
+        w1 = warped_preview[valid_mask].astype(float)
+        w2 = ref_enhanced[valid_mask].astype(float)
+        w1_norm = (w1 - np.mean(w1)) / (np.std(w1) + 1e-5)
+        w2_norm = (w2 - np.mean(w2)) / (np.std(w2) + 1e-5)
+        ncc_val = float(np.mean(w1_norm * w2_norm))
+
+        sob_w1 = cv2.Sobel(warped_preview, cv2.CV_32F, 1, 1, ksize=3)
+        sob_e2 = cv2.Sobel(ref_enhanced, cv2.CV_32F, 1, 1, ksize=3)
+        s1_val = sob_w1[valid_mask].astype(float)
+        s2_val = sob_e2[valid_mask].astype(float)
+        s1_norm = (s1_val - np.mean(s1_val)) / (np.std(s1_val) + 1e-5)
+        s2_norm = (s2_val - np.mean(s2_val)) / (np.std(s2_val) + 1e-5)
+        ncc_sobel = float(np.mean(s1_norm * s2_norm))
+    else:
+        ncc_val = 0.0
+        ncc_sobel = 0.0
+
+    if ncc_val < 0.25 or ncc_sobel < 0.50:
+        t_elapsed = round(time.perf_counter() - t_start, 3)
+        logger.warning(f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f}). Rejecting false lock.")
+        return {
+            "status": "FAILED",
+            "reason": f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f} < 0.50). Images do not spatially overlap.",
+            "message": f"Photometric structural correlation check failed (NCC_edge={ncc_sobel:.3f} < 0.50).",
+            "execution_time_seconds": t_elapsed,
+            "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            "transform_type": "failed_low_correspondence",
+            "metrics": {
+                "rmse": 0.0, "x_residual": 0.0, "y_residual": 0.0,
+                "inlier_count": 0, "outlier_count": total_candidates,
+                "total_candidates": total_candidates, "total_matches": total_candidates,
+                "inlier_ratio": 0.0, "confidence_score": 0.0,
+                "spatial_coverage": 0.0, "spatial_coverage_4x4": 0.0
+            },
+            "correspondences": []
+        }
 
     # Stage 4: Held-Out 80/20 Validation Set RMSE Calculation
     t0 = time.perf_counter()
@@ -368,10 +440,11 @@ def run_registration_pipeline(
         fit_src, fit_dst, val_src, val_dst, use_tps=use_tps_flag
     )
 
-    # Compute Continuous Confidence Score
+    # Compute Continuous Confidence Score incorporating edge structural correlation
     inlier_score = min(100.0, (inlier_count / 50.0) * 50.0 + (inlier_ratio_val * 50.0))
     rmse_score = max(0.0, 100.0 - (rmse_val * 6.0))
-    confidence_score = float(round(max(0.0, min(100.0, 0.50 * inlier_score + 0.50 * rmse_score)), 1))
+    sobel_score = max(0.0, min(100.0, ncc_sobel * 100.0))
+    confidence_score = float(round(max(0.0, min(100.0, 0.40 * inlier_score + 0.30 * rmse_score + 0.30 * sobel_score)), 1))
 
     # Stage 5: TPS Warping & Real GeoTIFF Raster Export
     t0_warp = time.perf_counter()
