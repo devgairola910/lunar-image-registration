@@ -123,6 +123,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
 
   const terminalContainerRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef(0);
+  const logTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onResultsReadyRef = useRef(onResultsReady);
   const onMarkCompletedRef = useRef(onMarkCompleted);
   const isApiPendingRef = useRef(isApiPending);
@@ -143,6 +144,12 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
   useEffect(() => {
     isFinishedRef.current = isFinished;
   }, [isFinished]);
+
+  // Clear all pending log stream timers
+  const clearLogTimers = () => {
+    logTimersRef.current.forEach(t => clearTimeout(t));
+    logTimersRef.current = [];
+  };
 
   // Auto-scroll terminal container internally
   useEffect(() => {
@@ -181,6 +188,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       return;
     }
 
+    clearLogTimers();
     startTimeRef.current = Date.now();
     setCurrentStageIdx(0);
     setStageProgress(0);
@@ -232,7 +240,6 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
             const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
             setLogs(prev => [...prev, `[T+${elapsedSec}s] [SYS] Awaiting PyTorch LoFTR / MAGSAC++ neural tensor response from AWS EC2 node...`]);
           }
-          // Poll every 250ms until API completes
           timer = setTimeout(() => runStage(STAGES.length), 250);
           return;
         }
@@ -246,12 +253,13 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
       const stage = STAGES[stageIdx];
       const stageStart = Date.now();
 
-      // Stream logs for this stage
+      // Stream logs for this stage with tracked timer references for clean memory release
       stage.telemetryLogs.forEach((logText, logIdx) => {
-        setTimeout(() => {
+        const logTimer = setTimeout(() => {
           const elapsedSec = ((Date.now() - startTimeRef.current) / 1000).toFixed(2);
           setLogs(prev => [...prev, `[T+${elapsedSec}s] [${stage.name.split(' ')[0].toUpperCase()}] ${logText}`]);
         }, logIdx * (stage.durationMs / stage.telemetryLogs.length));
+        logTimersRef.current.push(logTimer);
       });
 
       // Animate progress percentage
@@ -274,6 +282,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({
     return () => {
       clearTimeout(timer);
       clearInterval(progressInterval);
+      clearLogTimers();
     };
   }, [taskRunId, isAlreadyCompleted]);
 

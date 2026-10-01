@@ -38,6 +38,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
   onSplitPositionChange,
   selectedKeypointId,
   onSelectKeypoint,
+  onZoomChange,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -52,13 +53,23 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
   const sourceImgRef = useRef<HTMLImageElement | null>(null);
   const refImgRef = useRef<HTMLImageElement | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const animFrameRef = useRef<number | null>(null);
 
-  // Load images
+  // Accessible SR Announcement State
+  const [srAnnouncement, setSrAnnouncement] = useState<string>('');
+
+  // Load images with proper cancellation and unmount cleanup
   useEffect(() => {
+    let isCancelled = false;
     let loadedCount = 0;
+    setImagesLoaded(false);
+
     const checkLoaded = () => {
+      if (isCancelled) return;
       loadedCount++;
-      if (loadedCount >= 2) setImagesLoaded(true);
+      if (loadedCount >= 2) {
+        setImagesLoaded(true);
+      }
     };
 
     if (sourceMeta.previewUrl) {
@@ -66,9 +77,16 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       srcImg.crossOrigin = 'anonymous';
       srcImg.src = sourceMeta.previewUrl;
       srcImg.onload = () => {
-        sourceImgRef.current = srcImg;
-        checkLoaded();
+        if (!isCancelled) {
+          sourceImgRef.current = srcImg;
+          checkLoaded();
+        }
       };
+      srcImg.onerror = () => {
+        if (!isCancelled) checkLoaded();
+      };
+    } else {
+      loadedCount++;
     }
 
     if (referenceMeta.previewUrl) {
@@ -76,13 +94,24 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       refImg.crossOrigin = 'anonymous';
       refImg.src = referenceMeta.previewUrl;
       refImg.onload = () => {
-        refImgRef.current = refImg;
-        checkLoaded();
+        if (!isCancelled) {
+          refImgRef.current = refImg;
+          checkLoaded();
+        }
       };
+      refImg.onerror = () => {
+        if (!isCancelled) checkLoaded();
+      };
+    } else {
+      loadedCount++;
     }
+
+    return () => {
+      isCancelled = true;
+    };
   }, [sourceMeta.previewUrl, referenceMeta.previewUrl]);
 
-  // Calculate aspect ratio & dimensions helper
+  // Calculate aspect ratio & dimensions helper - dynamically adapts to real-world image dimensions
   const getImageDimensions = useCallback((canvasWidth: number, canvasHeight: number) => {
     const srcImg = sourceImgRef.current;
     const refImg = refImgRef.current;
@@ -99,10 +128,10 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     const imgX = (canvasWidth - imgW) / 2;
     const imgY = (canvasHeight - imgH) / 2;
 
-    return { imgX, imgY, imgW, imgH, imgAspectRatio };
+    return { imgX, imgY, imgW, imgH, imgAspectRatio, naturalW, naturalH };
   }, []);
 
-  // Main Canvas Render Loop
+  // Main Canvas Render Function
   const render = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -139,7 +168,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     ctx.scale(zoom, zoom);
     ctx.translate(-width / 2, -height / 2);
 
-    const { imgX, imgY, imgW, imgH, imgAspectRatio } = getImageDimensions(width, height);
+    const { imgX, imgY, imgW, imgH, imgAspectRatio, naturalW, naturalH } = getImageDimensions(width, height);
 
     if (viewMode === 'sideBySide') {
       // Side by Side Mode
@@ -182,10 +211,8 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
 
     } else if (viewMode === 'split') {
       // Split Wipe Slider Mode
-      // Draw reference base image
       ctx.drawImage(refImg, imgX, imgY, imgW, imgH);
 
-      // Clip and draw source registered image on the left portion
       const splitX = imgX + imgW * splitPosition;
 
       ctx.save();
@@ -195,7 +222,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.drawImage(srcImg, imgX, imgY, imgW, imgH);
       ctx.restore();
 
-      // Draw Split line (Crisp white hairline)
+      // Split line
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -203,7 +230,7 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.lineTo(splitX, imgY + imgH);
       ctx.stroke();
 
-      // Draw Split handle circle
+      // Split handle circle
       ctx.fillStyle = '#09090b';
       ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 1.5;
@@ -239,25 +266,23 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.restore();
 
     } else if (viewMode === 'difference') {
-      // Difference / Checkerboard Mask
+      // Difference Mask
       ctx.drawImage(refImg, imgX, imgY, imgW, imgH);
 
-      // Overlay difference blend mode
       ctx.save();
       ctx.globalCompositeOperation = 'difference';
       ctx.drawImage(srcImg, imgX, imgY, imgW, imgH);
       ctx.restore();
 
     } else if (viewMode === 'vectors') {
-      // Match Vectors Mode (Base Reference with Vector Overlay)
+      // Match Vectors Mode
       ctx.drawImage(refImg, imgX, imgY, imgW, imgH);
 
-      // Darken slightly for high contrast lines
       ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
       ctx.fillRect(imgX, imgY, imgW, imgH);
     }
 
-    // Outer HUD frame
+    // HUD frame
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.lineWidth = 1;
     ctx.strokeRect(imgX, imgY, imgW, imgH);
@@ -269,13 +294,11 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       ctx.setLineDash([3, 3]);
 
       for (let i = 1; i < 8; i++) {
-        // Vertical lines
         ctx.beginPath();
         ctx.moveTo(imgX + (imgW / 8) * i, imgY);
         ctx.lineTo(imgX + (imgW / 8) * i, imgY + imgH);
         ctx.stroke();
 
-        // Horizontal lines
         ctx.beginPath();
         ctx.moveTo(imgX, imgY + (imgH / 8) * i);
         ctx.lineTo(imgX + imgW, imgY + (imgH / 8) * i);
@@ -303,16 +326,20 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       });
     }
 
+    // Dynamic resolution scaling factors (supports real-world image resolutions beyond 600x600)
+    const scaleX = imgW / naturalW;
+    const scaleY = imgH / naturalH;
+
     // Draw Vector Lines if in Vectors mode
     if (viewMode === 'vectors') {
       keypoints.forEach(kp => {
         if (keypointFilter === 'inliers' && !kp.isInlier) return;
         if (keypointFilter === 'outliers' && kp.isInlier) return;
 
-        const sx = imgX + (kp.srcX / 600) * imgW;
-        const sy = imgY + (kp.srcY / 600) * imgH;
-        const rx = imgX + (kp.refX / 600) * imgW;
-        const ry = imgY + (kp.refY / 600) * imgH;
+        const sx = imgX + kp.srcX * scaleX;
+        const sy = imgY + kp.srcY * scaleY;
+        const rx = imgX + kp.refX * scaleX;
+        const ry = imgY + kp.refY * scaleY;
 
         ctx.strokeStyle = kp.isInlier ? 'rgba(34, 197, 94, 0.85)' : 'rgba(244, 63, 94, 0.65)';
         ctx.lineWidth = kp.isInlier ? 1.2 : 0.8;
@@ -323,20 +350,19 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       });
     }
 
-    // Keypoints Points Overlay
+    // Keypoints Overlay
     if (showKeypoints) {
       keypoints.forEach(kp => {
         if (keypointFilter === 'inliers' && !kp.isInlier) return;
         if (keypointFilter === 'outliers' && kp.isInlier) return;
 
-        const px = imgX + (kp.refX / 600) * imgW;
-        const py = imgY + (kp.refY / 600) * imgH;
+        const px = imgX + kp.refX * scaleX;
+        const py = imgY + kp.refY * scaleY;
 
         const isSelected = selectedKeypointId === kp.id;
         const isHovered = hoveredKeypoint?.id === kp.id;
 
         if (kp.isInlier) {
-          // Inlier: Crisp Photogrammetric Tie-Point Fiducial (Green with subtle dark hairline border)
           ctx.fillStyle = isSelected ? '#ffffff' : isHovered ? '#86efac' : '#22c55e';
           ctx.beginPath();
           ctx.arc(px, py, isSelected ? 3.5 : 2, 0, Math.PI * 2);
@@ -345,7 +371,6 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
           ctx.lineWidth = 0.5;
           ctx.stroke();
 
-          // Reticle ring if selected or hovered
           if (isSelected || isHovered) {
             ctx.strokeStyle = isSelected ? '#ffffff' : '#22c55e';
             ctx.lineWidth = 1.2;
@@ -361,7 +386,6 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
             ctx.stroke();
           }
         } else {
-          // Outlier: Subtle rose/red circle
           ctx.strokeStyle = isSelected ? '#ffffff' : '#fb7185';
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -392,6 +416,16 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     referenceMeta
   ]);
 
+  // RequestAnimationFrame managed render loop
+  const queueRender = useCallback(() => {
+    if (animFrameRef.current !== null) {
+      cancelAnimationFrame(animFrameRef.current);
+    }
+    animFrameRef.current = requestAnimationFrame(() => {
+      render();
+    });
+  }, [render]);
+
   // Canvas Resize and Render
   useEffect(() => {
     const handleResize = () => {
@@ -401,26 +435,77 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
 
       canvas.width = container.clientWidth;
       canvas.height = container.clientHeight;
-      render();
+      queueRender();
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [render]);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (animFrameRef.current !== null) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, [queueRender]);
 
   useEffect(() => {
-    render();
-  }, [render]);
+    queueRender();
+  }, [queueRender]);
 
-  // Mouse Interaction (Pan, Split Slider Drag, Hover & Click Keypoint)
+  // Keyboard navigation & WCAG focus support
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLCanvasElement>) => {
+    const panStep = 30;
+    const zoomStep = 0.15;
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, y: prev.y + panStep }));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, y: prev.y - panStep }));
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, x: prev.x + panStep }));
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      setPan(prev => ({ ...prev, x: prev.x - panStep }));
+    } else if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      const newZoom = Math.min(5, zoom + zoomStep);
+      onZoomChange?.(newZoom);
+      setSrAnnouncement(`Zoom increased to ${Math.round(newZoom * 100)}%`);
+    } else if (e.key === '-' || e.key === '_') {
+      e.preventDefault();
+      const newZoom = Math.max(0.5, zoom - zoomStep);
+      onZoomChange?.(newZoom);
+      setSrAnnouncement(`Zoom decreased to ${Math.round(newZoom * 100)}%`);
+    } else if (e.key === ']' || e.key === '[') {
+      e.preventDefault();
+      if (!keypoints.length) return;
+      const currentIdx = keypoints.findIndex(k => k.id === selectedKeypointId);
+      const nextIdx = e.key === ']' 
+        ? (currentIdx + 1) % keypoints.length 
+        : (currentIdx - 1 + keypoints.length) % keypoints.length;
+      const target = keypoints[nextIdx];
+      if (target && onSelectKeypoint) {
+        onSelectKeypoint(target.id);
+        setSrAnnouncement(`Selected keypoint #${target.id}, ${target.isInlier ? 'Inlier' : 'Outlier'}, residual ${target.residualError} px`);
+      }
+    } else if (e.key === 'Escape') {
+      if (selectedKeypointId && onSelectKeypoint) {
+        onSelectKeypoint(undefined);
+        setSrAnnouncement('Cleared keypoint selection');
+      }
+    }
+  };
+
+  // Mouse Interactions
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
 
-    // Check if clicking near the split slider line in 'split' mode
     if (viewMode === 'split') {
       const { imgX: baseImgX, imgW } = getImageDimensions(canvas.width, canvas.height);
       const imgX = baseImgX + pan.x;
@@ -432,7 +517,6 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       }
     }
 
-    // Otherwise initiate pan drag
     setIsDraggingPan(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
   };
@@ -444,28 +528,28 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const { imgX: baseImgX, imgY: baseImgY, imgW, imgH } = getImageDimensions(canvas.width, canvas.height);
+    const { imgX: baseImgX, imgY: baseImgY, imgW, imgH, naturalW, naturalH } = getImageDimensions(canvas.width, canvas.height);
     const imgX = baseImgX + pan.x;
     const imgY = baseImgY + pan.y;
 
-    // Calculate pixel coordinates relative to 600x600 image space
-    const imagePixelX = Math.round(((mouseX - imgX) / (imgW * zoom)) * 600);
-    const imagePixelY = Math.round(((mouseY - imgY) / (imgH * zoom)) * 600);
+    const scaleX = imgW / naturalW;
+    const scaleY = imgH / naturalH;
 
-    if (imagePixelX >= 0 && imagePixelX <= 600 && imagePixelY >= 0 && imagePixelY <= 600) {
+    const imagePixelX = Math.round((mouseX - imgX) / (scaleX * zoom));
+    const imagePixelY = Math.round((mouseY - imgY) / (scaleY * zoom));
+
+    if (imagePixelX >= 0 && imagePixelX <= naturalW && imagePixelY >= 0 && imagePixelY <= naturalH) {
       setCursorCoord({ x: imagePixelX, y: imagePixelY });
     } else {
       setCursorCoord(null);
     }
 
-    // Handle Split Slider Drag
     if (isDraggingSplit && viewMode === 'split') {
       const newPos = Math.max(0.02, Math.min(0.98, (mouseX - imgX) / imgW));
       onSplitPositionChange(newPos);
       return;
     }
 
-    // Handle Pan Drag
     if (isDraggingPan) {
       setPan({
         x: e.clientX - dragStart.x,
@@ -474,12 +558,11 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
       return;
     }
 
-    // Check for hovered keypoint
     if (showKeypoints && keypoints.length > 0) {
-      const hitRadius = 10;
+      const hitRadius = 12;
       const found = keypoints.find(kp => {
-        const px = imgX + (kp.refX / 600) * imgW * zoom;
-        const py = imgY + (kp.refY / 600) * imgH * zoom;
+        const px = imgX + kp.refX * scaleX * zoom;
+        const py = imgY + kp.refY * scaleY * zoom;
         const dist = Math.hypot(mouseX - px, mouseY - py);
         return dist < hitRadius;
       });
@@ -495,16 +578,26 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
   const handleClick = () => {
     if (hoveredKeypoint && onSelectKeypoint) {
       onSelectKeypoint(hoveredKeypoint.id);
+      setSrAnnouncement(`Selected keypoint #${hoveredKeypoint.id}, residual ${hoveredKeypoint.residualError} px`);
     }
   };
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[540px] sm:h-[620px] rounded-xl overflow-hidden bg-black border border-white/10 shadow-2xl group cursor-crosshair select-none"
+      className="relative w-full h-[540px] sm:h-[620px] min-h-[480px] max-h-[750px] rounded-xl overflow-hidden bg-black border border-white/10 shadow-2xl group cursor-crosshair select-none focus-within:ring-2 focus-within:ring-white/50"
     >
+      {/* Hidden Live Region for Screen Readers */}
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {srAnnouncement}
+      </div>
+
       <canvas
         ref={canvasRef}
+        tabIndex={0}
+        role="region"
+        aria-label="Interactive Lunar Surface Alignment Canvas Viewport. Use arrow keys to pan, plus and minus keys to zoom, square brackets to navigate keypoints."
+        onKeyDown={handleKeyDown}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -514,31 +607,31 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
           setHoveredKeypoint(null);
         }}
         onClick={handleClick}
-        className="w-full h-full block"
+        className="w-full h-full block focus:outline-none"
       />
 
       {/* Floating Cursor Telemetry HUD Pill */}
-      <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/90 border border-white/10 text-[11px] font-mono text-regolith-300 flex items-center space-x-3 pointer-events-none backdrop-blur-md">
-        <div className="flex items-center space-x-1 text-regolith-100">
+      <div className="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-black/90 border border-white/10 text-[11px] font-mono text-regolith-300 flex items-center space-x-3 pointer-events-none backdrop-blur-md max-w-[calc(100%-1.5rem)] overflow-hidden">
+        <div className="flex items-center space-x-1 text-regolith-100 flex-shrink-0">
           <Crosshair className="w-3.5 h-3.5" />
           <span>CURSOR:</span>
         </div>
         {cursorCoord ? (
-          <span className="text-white font-bold">
+          <span className="text-white font-bold truncate">
             X: {cursorCoord.x} px | Y: {cursorCoord.y} px
           </span>
         ) : (
           <span className="text-regolith-600">OFF TARGET</span>
         )}
-        <span className="text-regolith-700">|</span>
-        <span className="text-regolith-400">
+        <span className="text-regolith-700 flex-shrink-0">|</span>
+        <span className="text-regolith-400 flex-shrink-0">
           ZOOM: <strong className="text-white">{Math.round(zoom * 100)}%</strong>
         </span>
       </div>
 
       {/* Hovered Keypoint Telemetry Tooltip */}
       {hoveredKeypoint && (
-        <div className="absolute top-4 right-4 p-3 rounded-lg mission-card border border-white/20 text-xs font-mono text-regolith-200 pointer-events-none z-30 shadow-2xl space-y-1">
+        <div className="absolute top-4 right-4 p-3 rounded-lg mission-card border border-white/20 text-xs font-mono text-regolith-200 pointer-events-none z-30 shadow-2xl space-y-1 max-w-xs">
           <div className="flex items-center justify-between border-b border-white/10 pb-1">
             <span className="font-bold text-white">POINT #{hoveredKeypoint.id}</span>
             <span
@@ -564,10 +657,10 @@ export const LunarCanvasViewer: React.FC<LunarCanvasViewerProps> = ({
         </div>
       )}
 
-      {/* Pan hint badge */}
-      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/80 border border-white/10 text-[10px] font-mono text-regolith-400 flex items-center space-x-1.5 pointer-events-none">
-        <Move className="w-3 h-3 text-regolith-500" />
-        <span>Drag to Pan • Click Point to Inspect</span>
+      {/* Pan & Keyboard hint badge */}
+      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/80 border border-white/10 text-[10px] font-mono text-regolith-400 flex items-center space-x-1.5 pointer-events-none max-w-full truncate">
+        <Move className="w-3 h-3 text-regolith-500 flex-shrink-0" />
+        <span className="truncate">Drag / Arrows to Pan • +/- Zoom • [/] Points</span>
       </div>
     </div>
   );

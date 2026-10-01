@@ -90,9 +90,11 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Main Agency Navigation Bar */}
       <div className="px-4 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
         {/* Brand & Mission Crest */}
-        <div 
+        <button
+          type="button"
           onClick={() => onNavigate('landing')}
-          className="flex items-center space-x-3.5 cursor-pointer group"
+          aria-label="ChandraDrishti ISRO SAC - Go to Mission Briefing"
+          className="flex items-center space-x-3.5 cursor-pointer group text-left focus:outline-none focus:ring-2 focus:ring-white/50 rounded-xl p-1"
         >
           <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-white/95 border-2 border-white/30 p-1 group-hover:border-white/80 transition-all duration-200 shadow-xl group-hover:scale-105 overflow-hidden flex-shrink-0">
             <img 
@@ -101,32 +103,33 @@ export const Header: React.FC<HeaderProps> = ({
               className="w-full h-full object-contain"
             />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center space-x-2.5">
-              <span className="font-extrabold tracking-tight text-lg sm:text-2xl text-white font-display">
+              <span className="font-extrabold tracking-tight text-lg sm:text-2xl text-white font-display truncate">
                 ChandraDrishti
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white font-bold border border-white/20 uppercase tracking-wider shadow-sm">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 text-white font-bold border border-white/20 uppercase tracking-wider shadow-sm flex-shrink-0">
                 ISRO SAC
               </span>
             </div>
-            <p className="text-xs text-regolith-300 font-mono tracking-normal line-clamp-1">
-              Lunar Orbital Photogrammetry & Georeferencing Portal
+            <p className="text-xs text-regolith-300 font-mono tracking-normal truncate max-w-xs sm:max-w-sm">
+              Lunar Orbital Photogrammetry &amp; Georeferencing Portal
             </p>
           </div>
-        </div>
+        </button>
 
         {/* View Navigation Pills */}
-        <nav className="flex items-center p-1 rounded-xl bg-obsidian-850 border border-white/15 shadow-inner overflow-x-auto max-w-full w-full lg:w-auto space-x-1 no-scrollbar">
+        <nav className="flex items-center p-1 rounded-xl bg-obsidian-850 border border-white/15 shadow-inner overflow-x-auto max-w-full w-full lg:w-auto space-x-1 no-scrollbar" aria-label="Main Navigation">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
             return (
               <button
                 key={item.id}
+                type="button"
                 disabled={item.disabled}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-mono transition-all duration-150 whitespace-nowrap cursor-pointer ${
+                className={`flex items-center space-x-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-mono transition-all duration-150 whitespace-nowrap cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50 ${
                   isActive
                     ? 'bg-regolith-800 text-white border border-white/30 shadow-md font-bold'
                     : item.disabled
@@ -145,7 +148,10 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center space-x-3">
           <div className="relative group">
             <button
-              className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/20 hover:border-white/40 text-xs font-mono text-regolith-100 hover:text-white transition-all shadow-md cursor-pointer"
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded="false"
+              className="flex items-center space-x-2 px-3.5 py-2 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/20 hover:border-white/40 text-xs font-mono text-regolith-100 hover:text-white transition-all shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50"
             >
               <Layers className="w-3.5 h-3.5 text-regolith-300" />
               <span className="font-semibold">Preset Targets</span>
@@ -153,7 +159,11 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 shadow-2xl z-50 overflow-hidden">
+            <div 
+              role="menu"
+              aria-label="Preset Targets Menu"
+              className="absolute right-0 top-full mt-2 w-72 sm:w-80 max-w-[calc(100vw-2rem)] p-2 rounded-xl mission-card border border-white/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 shadow-2xl z-50 overflow-hidden"
+            >
               <div className="text-[10px] font-mono text-regolith-300 px-2 py-1.5 uppercase tracking-wider border-b border-white/10 mb-1.5 flex items-center justify-between">
                 <span>Verified Orbital Baselines</span>
                 <span className="text-earth-400 font-semibold">3 PRESETS</span>
@@ -161,14 +171,16 @@ export const Header: React.FC<HeaderProps> = ({
               {presets.map((preset) => (
                 <button
                   key={preset.id}
+                  type="button"
+                  role="menuitem"
                   onClick={() => onSelectPreset(preset)}
-                  className={`w-full text-left p-2.5 rounded-lg text-xs font-mono transition-all flex flex-col gap-1 hover:bg-white/10 cursor-pointer ${
+                  className={`w-full text-left p-2.5 rounded-lg text-xs font-mono transition-all flex flex-col gap-1 hover:bg-white/10 cursor-pointer focus:outline-none focus:bg-white/20 ${
                     activePresetId === preset.id ? 'bg-white/15 border border-white/30 text-white font-bold' : 'text-regolith-200'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-white">{preset.title}</span>
-                    <span className="text-[9px] text-regolith-200 px-1.5 py-0.5 rounded bg-white/10 border border-white/15">
+                    <span className="font-semibold text-white truncate">{preset.title}</span>
+                    <span className="text-[9px] text-regolith-200 px-1.5 py-0.5 rounded bg-white/10 border border-white/15 flex-shrink-0">
                       {preset.difficulty}
                     </span>
                   </div>

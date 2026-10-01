@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { 
   X, 
   Download, 
@@ -24,6 +24,57 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
   referenceMeta,
   keypoints
 }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  // Focus trap & Escape key listener
+  useEffect(() => {
+    if (isOpen) {
+      previousFocusRef.current = document.activeElement as HTMLElement;
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        } else if (e.key === 'Tab') {
+          if (!modalRef.current) return;
+          const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+          if (focusables.length === 0) return;
+          const first = focusables[0];
+          const last = focusables[focusables.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === first) {
+              e.preventDefault();
+              last.focus();
+            }
+          } else {
+            if (document.activeElement === last) {
+              e.preventDefault();
+              first.focus();
+            }
+          }
+        }
+      };
+
+      document.addEventListener('keydown', handleKeyDown);
+
+      // Focus first focusable element inside modal
+      setTimeout(() => {
+        if (modalRef.current) {
+          const first = modalRef.current.querySelector<HTMLElement>('button');
+          first?.focus();
+        }
+      }, 50);
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        previousFocusRef.current?.focus();
+      };
+    }
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handlePrint = () => {
@@ -35,8 +86,17 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto animate-fadeIn">
-      <div className="relative w-full max-w-4xl rounded-2xl bg-obsidian-900 border border-white/20 shadow-2xl overflow-hidden my-8 text-regolith-200 font-mono">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md overflow-y-auto animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="eval-report-modal-title"
+    >
+      <div
+        ref={modalRef}
+        className="relative w-full max-w-4xl rounded-2xl bg-obsidian-900 border border-white/20 shadow-2xl overflow-hidden my-8 text-regolith-200 font-mono focus:outline-none"
+        tabIndex={-1}
+      >
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 bg-black border-b border-white/10">
           <div className="flex items-center space-x-3">
@@ -44,7 +104,7 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
               <img src="/emblem-white.png" alt="State Emblem of India" className="h-6 w-auto object-contain opacity-95" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-white font-display">
+              <h3 id="eval-report-modal-title" className="text-base font-bold text-white font-display">
                 LUNAR REGISTRATION EVALUATION REPORT
               </h3>
               <p className="text-xs text-regolith-400">
@@ -54,8 +114,10 @@ export const EvaluationReportModal: React.FC<EvaluationReportModalProps> = ({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-regolith-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close Evaluation Report Modal"
+            className="p-1.5 rounded-lg text-regolith-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/50"
           >
             <X className="w-5 h-5" />
           </button>
