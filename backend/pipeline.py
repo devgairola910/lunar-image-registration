@@ -411,13 +411,21 @@ def run_registration_pipeline(
         ncc_val = 0.0
         ncc_sobel = 0.0
 
-    if ncc_val < 0.25 or ncc_sobel < 0.50:
+    # Multi-illumination structural verification check:
+    # Reject ONLY if intensity correlation, edge correlation, AND feature consensus all fail.
+    # Solar phase variations (shadows vs bright ejecta) cause edge correlation (ncc_sobel) to drop while ncc_val & inliers remain strong.
+    is_corr_valid = (
+        (ncc_val >= 0.20 or ncc_sobel >= 0.30) or 
+        (inlier_count >= 15 and inlier_ratio_val >= 0.30)
+    )
+
+    if not is_corr_valid:
         t_elapsed = round(time.perf_counter() - t_start, 3)
-        logger.warning(f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f}). Rejecting false lock.")
+        logger.warning(f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f}, Inliers={inlier_count}). Rejecting false lock.")
         return {
             "status": "FAILED",
-            "reason": f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f} < 0.50). Images do not spatially overlap.",
-            "message": f"Photometric structural correlation check failed (NCC_edge={ncc_sobel:.3f} < 0.50).",
+            "reason": f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f}). Images do not spatially overlap.",
+            "message": f"Photometric structural correlation check failed (NCC={ncc_val:.3f}, NCC_edge={ncc_sobel:.3f}).",
             "execution_time_seconds": t_elapsed,
             "transformation_matrix": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
             "transform_type": "failed_low_correspondence",
@@ -440,11 +448,11 @@ def run_registration_pipeline(
         fit_src, fit_dst, val_src, val_dst, use_tps=use_tps_flag
     )
 
-    # Compute Continuous Confidence Score incorporating edge structural correlation
+    # Compute Continuous Confidence Score robust to multi-illumination phase angle differences
     inlier_score = min(100.0, (inlier_count / 50.0) * 50.0 + (inlier_ratio_val * 50.0))
     rmse_score = max(0.0, 100.0 - (rmse_val * 6.0))
-    sobel_score = max(0.0, min(100.0, ncc_sobel * 100.0))
-    confidence_score = float(round(max(0.0, min(100.0, 0.40 * inlier_score + 0.30 * rmse_score + 0.30 * sobel_score)), 1))
+    photo_score = max(0.0, min(100.0, max(ncc_val, ncc_sobel) * 100.0))
+    confidence_score = float(round(max(0.0, min(100.0, 0.45 * inlier_score + 0.35 * rmse_score + 0.20 * photo_score)), 1))
 
     # Stage 5: TPS Warping & Real GeoTIFF Raster Export
     t0_warp = time.perf_counter()
